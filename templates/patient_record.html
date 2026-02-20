@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Patient Report</title>
+  <style>
+    :root{
+      --bg:#0f172a;          /* slate-900 */
+      --panel:#111827;       /* gray-900 */
+      --muted:#94a3b8;       /* slate-400 */
+      --text:#e5e7eb;        /* gray-200 */
+      --primary:#22d3ee;     /* cyan-400 */
+      --accent:#a78bfa;      /* violet-400 */
+      --ok:#34d399;          /* emerald-400 */
+      --warn:#fbbf24;        /* amber-400 */
+      --danger:#fb7185;      /* rose-400 */
+      --card:#0b1220;        /* deep panel */
+      --border:#1f2937;      /* gray-800 */
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:linear-gradient(180deg, #0b1020, #0a0f1a);
+      color:var(--text); font:16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    .wrap{max-width:1100px; margin:24px auto; padding:0 16px}
+
+    /* Header */
+    .header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px}
+    .brand{display:flex; align-items:center; gap:12px}
+    .logo{width:40px; height:40px; border-radius:12px; background:linear-gradient(145deg, var(--primary), var(--accent)); box-shadow:var(--shadow)}
+    h1{font-size:1.4rem; margin:0}
+    .sub{color:var(--muted); font-size:.95rem}
+
+    /* Tabs */
+    .tabs{display:flex; gap:8px; flex-wrap:wrap; background:rgba(255,255,255,.02); padding:8px; border-radius:12px; border:1px solid var(--border)}
+    .tab{padding:10px 14px; border-radius:12px; cursor:pointer; border:1px solid transparent; color:var(--muted); user-select:none}
+    .tab[aria-selected="true"]{background:rgba(34,211,238,.1); color:var(--text); border-color:rgba(34,211,238,.35)}
+
+    /* Panels */
+    .panel{margin-top:14px; background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow)}
+    .panel-header{display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border)}
+    .panel-title{font-weight:600}
+    .panel-actions{display:flex; gap:8px}
+
+    .btn{padding:9px 12px; border-radius:12px; border:1px solid var(--border); background:rgba(255,255,255,.02); color:var(--text); cursor:pointer}
+    .btn:hover{border-color:rgba(255,255,255,.15)}
+    .btn.primary{background:linear-gradient(145deg, rgba(34,211,238,.15), rgba(167,139,250,.15)); border-color:rgba(34,211,238,.35)}
+    .btn.ghost{background:transparent}
+    .btn.ok{border-color:rgba(52,211,153,.35)}
+    .btn.warn{border-color:rgba(251,191,36,.35)}
+    .btn.danger{border-color:rgba(251,113,133,.35)}
+
+    /* Table */
+    .table-wrap{overflow:auto}
+    table{width:100%; border-collapse:separate; border-spacing:0}
+    thead th{position:sticky; top:0; background:rgba(255,255,255,.03); text-align:left; font-weight:600; color:var(--muted); padding:10px 14px; border-bottom:1px solid var(--border)}
+    tbody td{padding:12px 14px; border-bottom:1px solid var(--border)}
+    tbody tr:hover{background:rgba(255,255,255,.02)}
+    .tag{display:inline-block; padding:3px 8px; border-radius:999px; font-size:.8rem; border:1px solid var(--border); color:var(--muted)}
+
+    /* Empty states */
+    .empty{padding:28px; text-align:center; color:var(--muted)}
+
+    /* Responsive helpers */
+    @media (max-width: 720px) {
+      .hide-sm{display:none}
+      .panel-actions{flex-wrap:wrap}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="header">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Patient Report</h1>
+          <div class="sub">Summaries, histories, and therapist access — Flask template</div>
+        </div>
+      </div>
+      <div class="panel-actions">
+        <!-- Example global export -->
+            <a class="btn" href="{{ url_for('export_feedback', patient_id=patient.id) }}">Export All as PDF</a>
+      </div>
+    </header>
+
+    <!-- Tabs -->
+    <nav class="tabs" role="tablist" aria-label="Patient Report sections">
+      <button class="tab" role="tab" aria-selected="true" aria-controls="tab-med" id="tab-med-btn">Medication History</button>
+      <button class="tab" role="tab" aria-selected="false" aria-controls="tab-speech" id="tab-speech-btn">Speech History</button>
+      <button class="tab" role="tab" aria-selected="false" aria-controls="tab-ther" id="tab-ther-btn">Therapist Access</button>
+      <button class="tab" role="tab" aria-selected="false" aria-controls="tab-trt" id="tab-trt-btn">Treatment Reports</button>
+    </nav>
+
+    <!-- Medication History -->
+    <section class="panel" id="tab-med" role="tabpanel" aria-labelledby="tab-med-btn">
+      <div class="panel-header">
+        <div class="panel-title">Medication History</div>
+        <div class="panel-actions">
+          <a class="btn primary" href="{{ url_for('medication.new', patient_id=patient.id) }}">+ New Entry</a>
+          <a class="btn" href="{{ url_for('medication.export_pdf', patient_id=patient.id) }}">Export PDF</a>
+        </div>
+      </div>
+      {% if meds and meds|length %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Medication</th>
+              <th class="hide-sm">Dosage</th>
+              <th class="hide-sm">Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in meds %}
+            <tr>
+              <td>{{ m.date_started.strftime('%Y-%m-%d') }}</td>
+              <td>{{ m.name }}</td>
+              <td class="hide-sm">{{ m.dosage }}</td>
+              <td class="hide-sm">{{ m.notes or '-' }}</td>
+              <td>
+                <a class="btn ghost" href="{{ url_for('medication.view', id=m.id) }}">View</a>
+                <a class="btn ghost" href="{{ url_for('medication.edit', id=m.id) }}">Edit</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty">No medication history yet. <a href="{{ url_for('medication.new', patient_id=patient.id) }}">Add the first entry</a>.</div>
+      {% endif %}
+    </section>
+
+    <!-- Speech History -->
+    <section class="panel" id="tab-speech" role="tabpanel" aria-labelledby="tab-speech-btn" hidden>
+      <div class="panel-header">
+        <div class="panel-title">Speech History</div>
+        <div class="panel-actions">
+          <a class="btn primary" href="{{ url_for('speech.new', patient_id=patient.id) }}">+ Log Session</a>
+          <a class="btn" href="{{ url_for('speech.export_pdf', patient_id=patient.id) }}">Export PDF</a>
+        </div>
+      </div>
+      {% if speech_logs and speech_logs|length %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Session Type</th>
+              <th class="hide-sm">Duration</th>
+              <th class="hide-sm">Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in speech_logs %}
+            <tr>
+              <td>{{ s.date.strftime('%Y-%m-%d') }}</td>
+              <td>{{ s.session_type }}</td>
+              <td class="hide-sm">{{ s.duration_minutes }} min</td>
+              <td class="hide-sm">{{ s.notes or '-' }}</td>
+              <td>
+                <a class="btn ghost" href="{{ url_for('speech.view', id=s.id) }}">View</a>
+                <a class="btn ghost" href="{{ url_for('speech.edit', id=s.id) }}">Edit</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <div class="empty">No speech sessions logged yet. <a href="{{ url_for('speech.new', patient_id=patient.id) }}">Log one now</a>.</div>
+      {% endif %}
+    </section>
+
+    <!-- Therapist Access -->
+    <section class="panel" id="tab-ther" role="tabpanel" aria-labelledby="tab-ther-btn" hidden>
+      <div class="panel-header">
+        <div class="panel-title">Therapist Access</div>
+        <div class="panel-actions">
+          <a class="btn primary" href="{{ url_for('therapist.invite', patient_id=patient.id) }}">+ Invite Therapist</a>
+        </div>
+      </div>
+      {% if therapists and therapists|length %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th class="hide-sm">Role</th>
+              <th>Access</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in therapists %}
+            <tr>
+              <td>{{ t.name }}</td>
+              <td class="hide-sm">{{ t.role or 'Therapist' }}</td>
+              <td><span class="tag">{{ t.access_level or 'Read' }}</span></td>
+              <td>
+                {% if t.is_active %}<span class="tag" style="border-color:rgba(52,211,153,.35)">Active</span>{% else %}
+                <span class="tag" style="border-color:rgba(251,113,133,.35)">Pending</span>{% endif %}
+              </td>
+              <td>
+                <a class="btn ghost" href="{{ url_for('therapist.view', id=t.id) }}">View</a>
+                {% if t.is_active %}
+                  <a class="btn warn" href="{{ url_for('therapist.set_access', id=t.id) }}">Change Access</a>
+                  <a class="btn danger" href="{{ url_for('therapist.revoke', id=t.id) }}">Revoke</a>
+                {% else %}
+                  <a class="btn ok" href="{{ url_for('therapist.resend', id=t.id) }}">Resend Invite</a>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <div class="empty">No therapists added yet. <a href="{{ url_for('therapist.invite', patient_id=patient.id) }}">Invite a therapist</a>.</div>
+      {% endif %}
+    </section>
+
+    <!-- Treatment Reports -->
+    <section class="panel" id="tab-trt" role="tabpanel" aria-labelledby="tab-trt-btn" hidden>
+      <div class="panel-header">
+        <div class="panel-title">Treatment Reports</div>
+        <div class="panel-actions">
+          <a class="btn primary" href="{{ url_for('treatment.new', patient_id=patient.id) }}">+ New Report</a>
+          <a class="btn" href="{{ url_for('treatment.export_pdf', patient_id=patient.id) }}">Export PDF</a>
+        </div>
+      </div>
+      {% if treatments and treatments|length %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Therapist</th>
+              <th class="hide-sm">Note</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in treatments %}
+            <tr>
+              <td>{{ r.date_generated.strftime('%Y-%m-%d') }}</td>
+              <td>{{ r.psychologist_name }}</td>
+              <td class="hide-sm">{{ r.note[:80] ~ ('…' if r.note and r.note|length > 80 else '') }}</td>
+              <td>
+                <a class="btn ghost" href="{{ url_for('treatment.view', id=r.id) }}">View</a>
+                <a class="btn ghost" href="{{ url_for('treatment.edit', id=r.id) }}">Edit</a>
+                <a class="btn ghost" href="{{ url_for('treatment.download_pdf', id=r.id) }}">PDF</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <div class="empty">No treatment reports yet. <a href="{{ url_for('treatment.new', patient_id=patient.id) }}">Create the first report</a>.</div>
+      {% endif %}
+    </section>
+
+  </div>
+
+  <script>
+    // Simple tab switcher (no framework)
+    const tabs = [
+      {btn: 'tab-med-btn', panel: 'tab-med'},
+      {btn: 'tab-speech-btn', panel: 'tab-speech'},
+      {btn: 'tab-ther-btn', panel: 'tab-ther'},
+      {btn: 'tab-trt-btn', panel: 'tab-trt'}
+    ];
+    function selectTab(id){
+      tabs.forEach(t=>{
+        const b=document.getElementById(t.btn);
+        const p=document.getElementById(t.panel);
+        const active = t.btn===id;
+        b.setAttribute('aria-selected', active);
+        if(active){ p.removeAttribute('hidden'); p.focus?.(); }
+        else { p.setAttribute('hidden',''); }
+      });
+    }
+    tabs.forEach(t=>{
+      document.getElementById(t.btn).addEventListener('click',()=>selectTab(t.btn));
+    });
+  </script>
+</body>
+</html>

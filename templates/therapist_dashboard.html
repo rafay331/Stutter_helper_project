@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Therapist Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root{
+      --bg1:#667eea;
+      --bg2:#764ba2;
+
+      --card:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+
+      --brand:#667eea;
+      --brand2:#764ba2;
+
+      --border:#e5e7eb;
+      --soft:#f5f7fb;
+
+      --shadow: 0 10px 30px rgba(0,0,0,.10);
+      --shadow2: 0 6px 18px rgba(0,0,0,.08);
+
+      --green:#16a34a;
+      --yellow:#d97706;
+      --red:#dc2626;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell;
+      color:var(--text);
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+    }
+
+    a{color:inherit;text-decoration:none}
+    .container{max-width:1180px;margin:0 auto;padding:24px}
+
+    header{
+      display:flex;align-items:center;justify-content:space-between;gap:16px;
+      padding:16px 0;margin-bottom:14px;
+      border-bottom: 1px solid rgba(255,255,255,.35);
+    }
+
+    .brand{display:flex;align-items:center;gap:12px;font-weight:800;color:#fff}
+    .brand .dot{
+      width:12px;height:12px;border-radius:50%;
+      background:#fff;
+      box-shadow:0 0 18px rgba(255,255,255,.75);
+    }
+    .subtle{color:rgba(255,255,255,.85);font-size:13px;font-weight:500}
+
+    .grid{display:grid;gap:16px}
+    @media (min-width:960px){
+      .grid-cols-3{grid-template-columns:1.3fr 1fr 1fr}
+      .grid-cols-2{grid-template-columns:1fr 1fr}
+    }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .card h2{margin:0 0 10px;font-size:18px;color:var(--text)}
+
+    .btn{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:10px 14px;border-radius:999px;
+      border:1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      cursor:pointer;
+      font-weight:700;
+      box-shadow: var(--shadow2);
+      transition: transform .08s ease, background .2s ease, border-color .2s ease;
+    }
+    .btn:hover{transform: translateY(-1px); border-color:#d1d5db}
+    .btn:focus{outline:2px solid rgba(102,126,234,.5);outline-offset:2px}
+
+    .btn-primary{
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+      color:#fff;
+      border-color: transparent;
+    }
+
+    .field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+    .field label{font-size:13px;color:var(--muted);font-weight:700}
+
+    .input,.select,.textarea{
+      width:100%;
+      background: var(--soft);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      transition: .2s ease;
+    }
+    .input:focus,.select:focus,.textarea:focus{
+      outline:none;
+      border-color: rgba(102,126,234,.65);
+      box-shadow: 0 0 0 4px rgba(102,126,234,.15);
+      background:#fff;
+    }
+    .textarea{min-height:120px;resize:vertical}
+
+    table{width:100%;border-collapse:collapse;background:#fff}
+    th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left;font-size:14px}
+    th{color:var(--muted);font-weight:800;background:#fafafa}
+
+    .flash{
+      margin:12px 0;
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.55);
+      background: rgba(255,255,255,.22);
+      color:#fff;
+      font-weight:700;
+    }
+
+    .section-title{
+      display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px
+    }
+
+    .search{display:flex;gap:8px;align-items:center}
+    .search input{max-width:260px}
+
+    .stack{display:flex;flex-direction:column;gap:12px}
+    .muted{color:var(--muted)}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+
+    .inner-card{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px;
+      box-shadow: var(--shadow2);
+    }
+
+    .table-wrap{
+      max-height:420px;
+      overflow:auto;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#fff;
+      box-shadow: var(--shadow2);
+    }
+
+    #savedNotesBox::-webkit-scrollbar{width:10px}
+    #savedNotesBox::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:999px}
+    #savedNotesBox::-webkit-scrollbar-track{background:#f3f4f6;border-radius:999px}
+
+    .status-line{margin-top:10px; font-weight:800;}
+    .debug-line{margin-top:10px; font-size:13px; font-weight:800;}
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <span class="dot"></span>
+        <div>
+          <div>Therapist Dashboard</div>
+          <div class="subtle">Stuttering Care • Organized</div>
+        </div>
+      </div>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="grid grid-cols-3">
+      <!-- Secure Communication Notes -->
+      <section class="card">
+        <div class="section-title">
+          <h2>Notes</h2>
+        </div>
+
+        <form id="secureNoteForm" method="post" action="/therapist/notes/save">
+          <div class="field">
+            <label for="note_patient">Patient</label>
+            <select id="note_patient" name="patient_id" class="select" required>
+              <option value="" disabled selected>Select patient</option>
+              {% set opts = patient_options if patient_options is defined and patient_options else patients %}
+              {% for p in opts %}
+                <option value="{{ p.id }}">{{ p.name }}{% if p.age %} ({{ p.age }}y){% endif %}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="note_subject">Subject</label>
+            <input id="note_subject" name="subject" class="input"
+                   placeholder="e.g., Session #5: Fluency shaping feedback" required>
+          </div>
+
+          <div class="field">
+            <label for="note_body">Message</label>
+            <textarea id="note_body" name="message" class="textarea"
+                      placeholder="Write a secure note..." required></textarea>
+          </div>
+
+          <div class="row">
+            <button class="btn btn-primary" type="submit">Save Note</button>
+            <button class="btn" type="reset">Clear</button>
+          </div>
+
+          <div id="noteStatus" class="muted status-line"></div>
+        </form>
+
+        {% if recent_notes is defined and recent_notes %}
+          <div class="stack" style="margin-top:14px">
+            <div class="muted" style="font-weight:800">Recent secure notes</div>
+            {% for n in recent_notes %}
+              <div class="inner-card">
+                <div class="row" style="justify-content:space-between">
+                  <div>
+                    <strong>{{ n.subject or 'Note' }}</strong>
+                    {% if n.patient_name %} · <span class="muted">for {{ n.patient_name }}</span>{% endif %}
+                  </div>
+                  <div class="muted">{{ n.created_at }}</div>
+                </div>
+                <div class="muted" style="margin-top:6px">{{ n.note }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </section>
+
+      <!-- Saved Notes -->
+      <section class="card">
+        <div class="section-title">
+          <h2>Saved Notes</h2>
+        </div>
+
+        <div class="stack" id="savedNotesBox" style="max-height:420px; overflow:auto; padding-right:6px;">
+          {% if notes is not defined or notes|length == 0 %}
+            <div class="muted" style="font-weight:700">No notes yet.</div>
+          {% else %}
+            {% for n in notes %}
+              <div class="inner-card" id="noteCard-{{ n.id }}">
+                <div class="row" style="justify-content:space-between; align-items:center;">
+                  <div>
+                    <strong>{{ n.subject or 'Note' }}</strong>
+                    {% if n.patient_name %} · <span class="muted">for {{ n.patient_name }}</span>{% endif %}
+                  </div>
+
+                  <div class="row" style="align-items:center;">
+                    <div class="muted">{{ n.created_at }}</div>
+                    <button class="btn" type="button" onclick="deleteNote('{{ n.id }}')">Delete</button>
+                  </div>
+                </div>
+
+                <div class="muted" style="margin-top:8px; white-space:pre-wrap;">
+                  {{ n.message }}
+                </div>
+              </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+      </section>
+
+      <!-- Patient Audios (General uploads) -->
+      <section class="card">
+        <div class="section-title">
+          <h2>Patient Audios</h2>
+          <div class="search">
+            <input id="patient-search" class="input" placeholder="Search patient...">
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table id="patientsTable">
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th style="width: 170px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="patient-rows"></tbody>
+          </table>
+        </div>
+
+        <div id="audioPanel" class="inner-card" style="margin-top:12px; display:none;">
+          <div class="row" style="justify-content:space-between; align-items:center;">
+            <strong>Uploaded Audios</strong>
+            <span id="audioPatientLabel" class="muted"></span>
+          </div>
+          <div id="audioList" class="stack" style="margin-top:10px;"></div>
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <a class="btn btn-primary" href="#report">Generate Report</a>
+        </div>
+      </section>
+    </div>
+
+    <!-- Speech Therapy -->
+    <section class="card" style="margin-top:16px">
+      <div class="section-title">
+        <h2>Speech Therapy</h2>
+        <span class="muted" style="font-size:13px;font-weight:700">Assign exercises to patients</span>
+      </div>
+
+      <form id="assignExerciseForm">
+        <div class="field">
+          <label for="st_patient">Patient</label>
+          <select id="st_patient" name="patient_id" class="select" required>
+            <option value="" disabled selected>Select patient</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="st_exercise">Exercise</label>
+          <select id="st_exercise" name="exercise_id" class="select" required>
+            <option value="" disabled selected>Loading exercises...</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="st_due">Due Date (optional)</label>
+          <input id="st_due" name="due_date" type="date" class="input">
+        </div>
+
+        <div class="row">
+          <button class="btn btn-primary" type="submit">Assign Exercise</button>
+          <button class="btn" type="reset">Clear</button>
+        </div>
+
+        <div id="assignStatus" class="muted status-line"></div>
+      </form>
+
+      <!-- ✅ Speech Therapy Submissions (FIXED) -->
+      <div id="speechSubPanel" class="inner-card" style="margin-top:12px;">
+        <div class="row" style="justify-content:space-between; align-items:center;">
+          <strong>Exercise Submissions</strong>
+          <span id="speechSubPatientLabel" class="muted"></span>
+        </div>
+
+        <div id="speechSubList" class="stack" style="margin-top:10px;">
+          <div class="muted">Select a patient to view their exercise submissions.</div>
+        </div>
+
+        <div id="speechSubDebug" class="muted debug-line"></div>
+      </div>
+
+      <div class="inner-card" style="margin-top:12px;">
+        <div class="muted" style="font-weight:800; margin-bottom:6px;">Next steps</div>
+        <div class="muted" style="font-size:13px; line-height:1.5;">
+          After assigning, the patient will see this exercise in their dashboard.
+          When they upload audio for it, you’ll get it in “Exercise Submissions”.
+        </div>
+      </div>
+    </section>
+
+    <!-- Report Generation -->
+    <section id="report" class="card" style="margin-top:16px">
+      <div class="section-title">
+        <h2>Report Generation</h2>
+        <span class="muted" style="font-size:13px;font-weight:700">Create PDF summaries for patients</span>
+      </div>
+
+      <form method="post"
+            action="{{ url_for('therapist_generate_report', patient_id=0) }}"
+            onsubmit="this.action=this.action.replace('/0', '/'+document.getElementById('rep_patient').value);">
+
+        <div class="grid grid-cols-2" style="gap:16px">
+          <div class="field">
+            <label for="rep_patient">Patient</label>
+            <select id="rep_patient" name="patient_id" class="select" required>
+              <option value="" disabled selected>Select patient</option>
+              {% for p in opts %}
+                <option value="{{ p.id }}">{{ p.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="rep_type">Report Type</label>
+            <select id="rep_type" name="report_type" class="select" required>
+              <option value="summary">Session Summary</option>
+              <option value="progress">Progress (last 30 days)</option>
+              <option value="full">Full Overview</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="rep_from">From</label>
+            <input id="rep_from" name="from_date" type="date" class="input">
+          </div>
+
+          <div class="field">
+            <label for="rep_to">To</label>
+            <input id="rep_to" name="to_date" type="date" class="input">
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:12px;">
+          <label for="rep_notes">Report</label>
+          <textarea
+            id="rep_notes"
+            name="therapist_notes"
+            class="textarea"
+            placeholder="Write the report summary, observations, recommendations..."
+            required
+          ></textarea>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <button class="btn btn-primary" type="submit">Generate PDF</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+<script>
+  let PATIENT_CACHE = [];
+
+  function renderPatientsOverview(list){
+    const tb = document.getElementById('patient-rows');
+    if(!list || !list.length){
+      tb.innerHTML = `<tr><td colspan="2" class="muted">No patients yet.</td></tr>`;
+      return;
+    }
+
+    tb.innerHTML = list.map(p => `
+      <tr>
+        <td>
+          <div class="name">${escapeHtml(p.username || "—")}</div>
+          <div class="muted" style="font-size:13px">${escapeHtml(p.email || "")}</div>
+        </td>
+        <td>
+          <button class="btn" type="button"
+            onclick="loadPatientAudios(${p.id}, '${String(p.username||"").replaceAll("'", "\\'")}')">
+            View Audios
+          </button>
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  async function loadPatientAudios(patientId, patientName){
+    const panel = document.getElementById("audioPanel");
+    const label = document.getElementById("audioPatientLabel");
+    const listEl = document.getElementById("audioList");
+
+    panel.style.display = "block";
+    label.textContent = patientName ? `for ${patientName}` : `for ID ${patientId}`;
+    listEl.innerHTML = `<div class="muted">Loading audios...</div>`;
+
+    try{
+      const res = await fetch(`/api/patient/${patientId}/uploaded_audio`, { cache:"no-store" });
+      const data = await res.json();
+
+      if(!data.success){
+        listEl.innerHTML = `<div class="muted">Failed: ${escapeHtml(data.error || "Unknown error")}</div>`;
+        return;
+      }
+
+      if(!data.audios || !data.audios.length){
+        listEl.innerHTML = `<div class="muted">No uploaded audio found for this patient.</div>`;
+        return;
+      }
+
+      listEl.innerHTML = data.audios.map(a => `
+        <div class="inner-card">
+          <div class="row" style="justify-content:space-between;">
+            <div><strong>${escapeHtml(a.original_filename || "audio")}</strong></div>
+            <div class="muted">${escapeHtml(a.uploaded_at || "")}</div>
+          </div>
+          <audio controls style="width:100%; margin-top:8px;">
+            <source src="${a.listen_url}">
+          </audio>
+        </div>
+      `).join("");
+
+    }catch(e){
+      console.error(e);
+      listEl.innerHTML = `<div class="muted">Error loading audios.</div>`;
+    }
+  }
+
+  function fillSelect(selectId, patients){
+    const sel = document.getElementById(selectId);
+    if(!sel) return;
+    while(sel.options.length > 1) sel.remove(1);
+
+    patients.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = `${p.username}${p.email ? ` (${p.email})` : ""}`;
+      sel.appendChild(opt);
+    });
+  }
+
+  async function loadPatients(){
+    try{
+      const res = await fetch("/api/patients", { cache: "no-store" });
+      const data = await res.json();
+
+      PATIENT_CACHE = (data && data.success) ? (data.patients || []) : [];
+
+      fillSelect("note_patient", PATIENT_CACHE);
+      fillSelect("rep_patient", PATIENT_CACHE);
+      fillSelect("st_patient", PATIENT_CACHE);
+
+      applyFilter();
+
+      // ✅ AUTO-select first patient in Speech Therapy and load submissions
+      const stSel = document.getElementById("st_patient");
+      if(stSel && stSel.options.length > 1){
+        if(!stSel.value){
+          stSel.selectedIndex = 1; // first real patient
+        }
+        const pid = stSel.value;
+        const pname = stSel.options[stSel.selectedIndex]?.textContent || "";
+        loadSpeechSubmissions(pid, pname);
+      }
+
+    }catch(e){
+      console.error("Failed to load patients:", e);
+      PATIENT_CACHE = [];
+      renderPatientsOverview([]);
+    }
+  }
+
+  function applyFilter(){
+    const q = (document.getElementById('patient-search')?.value || '').toLowerCase().trim();
+    if(!q){ renderPatientsOverview(PATIENT_CACHE); return; }
+
+    const filtered = PATIENT_CACHE.filter(p => {
+      const hay = `${p.username || ""} ${p.email || ""}`.toLowerCase();
+      return hay.includes(q);
+    });
+
+    renderPatientsOverview(filtered);
+  }
+
+  function escapeHtml(str){
+    return String(str || "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  async function deleteNote(noteId){
+    if(!confirm("Delete this note?")) return;
+
+    try{
+      const res = await fetch(`/therapist/notes/${noteId}/delete`, { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+
+      if(res.ok && data.success){
+        const card = document.getElementById(`noteCard-${noteId}`);
+        if(card) card.remove();
+      }else{
+        alert(data.error || "Failed to delete note.");
+      }
+    }catch(e){
+      console.error(e);
+      alert("Network/server error.");
+    }
+  }
+
+  async function loadSpeechExercises(){
+    const sel = document.getElementById("st_exercise");
+    if(!sel) return;
+
+    sel.innerHTML = `<option value="" disabled selected>Loading exercises...</option>`;
+
+    try{
+      const res = await fetch("/api/speech/exercises", { cache: "no-store" });
+      const data = await res.json();
+
+      if(!data || !data.success){
+        sel.innerHTML = `<option value="" disabled selected>Failed to load</option>`;
+        return;
+      }
+
+      const exercises = data.exercises || [];
+      if(!exercises.length){
+        sel.innerHTML = `<option value="" disabled selected>No exercises found</option>`;
+        return;
+      }
+
+      sel.innerHTML = `<option value="" disabled selected>Select exercise</option>`;
+      exercises.forEach(ex => {
+        const opt = document.createElement("option");
+        opt.value = ex.id;
+        opt.textContent = ex.title || `Exercise #${ex.id}`;
+        sel.appendChild(opt);
+      });
+
+    }catch(e){
+      console.error("Failed to load exercises:", e);
+      sel.innerHTML = `<option value="" disabled selected>Error loading</option>`;
+    }
+  }
+
+  async function submitAssignExercise(e){
+    e.preventDefault();
+
+    const statusEl = document.getElementById("assignStatus");
+    const patientId = document.getElementById("st_patient")?.value;
+    const exerciseId = document.getElementById("st_exercise")?.value;
+    const dueDate = document.getElementById("st_due")?.value;
+
+    if(statusEl) statusEl.textContent = "Assigning...";
+
+    if(!patientId || !exerciseId){
+      if(statusEl) statusEl.textContent = "❌ Please select patient and exercise.";
+      return;
+    }
+
+    try{
+      const fd = new FormData();
+      fd.append("patient_id", patientId);
+      fd.append("exercise_id", exerciseId);
+      if(dueDate) fd.append("due_date", dueDate);
+
+      const res = await fetch("/therapist/speech/assign", { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+
+      if(res.ok && data.success){
+        if(statusEl) statusEl.textContent = "✅ Assigned successfully!";
+        const due = document.getElementById("st_due");
+        if(due) due.value = "";
+        setTimeout(()=>{ if(statusEl) statusEl.textContent=""; }, 2500);
+
+        const stSel = document.getElementById("st_patient");
+        const pname = stSel?.options[stSel.selectedIndex]?.textContent || "";
+        loadSpeechSubmissions(patientId, pname);
+
+      }else{
+        if(statusEl) statusEl.textContent = "❌ " + (data.error || "Failed to assign.");
+      }
+    }catch(err){
+      console.error(err);
+      if(statusEl) statusEl.textContent = "❌ Network/server error.";
+    }
+  }
+
+  async function loadSpeechSubmissions(patientId, patientName){
+    const label = document.getElementById("speechSubPatientLabel");
+    const listEl = document.getElementById("speechSubList");
+    const debugEl = document.getElementById("speechSubDebug");
+
+    if(label) label.textContent = patientName ? `for ${patientName}` : `for ID ${patientId}`;
+
+    if(!patientId){
+      if(listEl) listEl.innerHTML = `<div class="muted">Select a patient to view their exercise submissions.</div>`;
+      if(debugEl) debugEl.textContent = "";
+      return;
+    }
+
+    if(listEl) listEl.innerHTML = `<div class="muted">Loading submissions...</div>`;
+    if(debugEl) debugEl.textContent = "";
+
+    try{
+      const res = await fetch(`/api/speech/submissions/${patientId}`, { cache: "no-store" });
+      // if(debugEl) debugEl.textContent = `API: /api/speech/submissions/${patientId} • HTTP ${res.status}`;
+
+      const data = await res.json().catch(() => ({}));
+
+      if(!res.ok || !data.success){
+        const msg = data.error || "Unauthorized / Server error";
+        if(listEl) listEl.innerHTML = `<div class="muted">Failed: ${escapeHtml(msg)}</div>`;
+        return;
+      }
+
+      const subs = data.submissions || [];
+      if(!subs.length){
+        if(listEl) listEl.innerHTML = `<div class="muted">No exercise submissions found for this patient.</div>`;
+        return;
+      }
+
+      if(listEl) listEl.innerHTML = subs.map(s => `
+        <div class="inner-card">
+          <div class="row" style="justify-content:space-between;">
+            <div>
+              <strong>${escapeHtml(s.exercise_title || "Exercise")}</strong>
+              <div class="muted" style="font-size:13px;">
+                File: ${escapeHtml(s.original_filename || "audio")}
+              </div>
+            </div>
+            <div class="muted" style="text-align:right;">
+              <div>${escapeHtml(s.submitted_at || "")}</div>
+              <div style="font-size:13px;">${escapeHtml(s.status || "")}</div>
+            </div>
+          </div>
+
+          <audio controls style="width:100%; margin-top:10px;">
+            <source src="${s.listen_url}">
+          </audio>
+        </div>
+      `).join("");
+
+    }catch(e){
+      console.error(e);
+      if(listEl) listEl.innerHTML = `<div class="muted">Error loading submissions.</div>`;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadPatients();
+    loadSpeechExercises();
+
+    document.getElementById('patient-search')?.addEventListener('input', applyFilter);
+
+    const noteForm = document.getElementById("secureNoteForm");
+    const noteStatus = document.getElementById("noteStatus");
+
+    if(noteForm){
+      noteForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if(noteStatus) noteStatus.textContent = "Saving...";
+
+        try{
+          const res = await fetch(noteForm.action, { method: "POST", body: new FormData(noteForm) });
+          const data = await res.json().catch(() => ({}));
+
+          if(res.ok && data.success){
+            if(noteStatus) noteStatus.textContent = "✅ Saved!";
+            const subj = document.getElementById("note_subject");
+            const msg  = document.getElementById("note_body");
+            if(subj) subj.value = "";
+            if(msg) msg.value = "";
+            setTimeout(() => { if(noteStatus) noteStatus.textContent = ""; }, 2500);
+          } else {
+            if(noteStatus) noteStatus.textContent = "❌ " + (data.error || "Failed to save note");
+          }
+        }catch(err){
+          console.error(err);
+          if(noteStatus) noteStatus.textContent = "❌ Network/server error.";
+        }
+      });
+    }
+
+    document.getElementById("assignExerciseForm")?.addEventListener("submit", submitAssignExercise);
+
+    document.getElementById("st_patient")?.addEventListener("change", (e) => {
+      const pid = e.target.value;
+      const pname = e.target.options[e.target.selectedIndex]?.textContent || "";
+      loadSpeechSubmissions(pid, pname);
+    });
+  });
+</script>
+
+</body>
+</html>

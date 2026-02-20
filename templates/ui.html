@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UI Module: Voice Input & Speech Processing</title>
+
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #74ebd5, #ACB6E5);
+      font-family: 'Arial', sans-serif;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      background: #fff;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      margin-bottom: 30px;
+    }
+    h1, h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .btn-custom {
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    #waveform {
+      width: 100%;
+      height: 120px;
+      background-color: #f0f0f0;
+      border: 1px solid #ddd;
+      margin-top: 15px;
+    }
+    .record-btns button {
+      margin-right: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Voice Input & Speech Processing Module</h1>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alert alert-info">
+          {% for message in messages %}
+            <p>{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- ✅ Upload form (file input MUST be inside form to submit) -->
+    <h2>Choose Audio File(s)</h2>
+    <form method="post" action="{{ url_for('audio_upload') }}" enctype="multipart/form-data" id="uploadForm">
+      <div class="form-group">
+        <label for="audioFile">Choose Audio File(s):</label>
+        <input
+          type="file"
+          class="form-control-file"
+          id="audioFile"
+          name="file"
+          accept="audio/*"
+          multiple
+        >
+        <small class="text-muted">
+          Tip: You can either choose file(s) OR record from microphone. If both exist, the selected file is used first.
+        </small>
+      </div>
+
+      <button type="submit" class="btn btn-success btn-custom btn-block">Upload File(s)</button>
+    </form>
+
+    <!-- ✅ Stutter Detection uses same file picker or recorded audio -->
+    <h2 class="mt-4">Stutter Detection</h2>
+    <form id="dysForm">
+      <button type="submit" class="btn btn-danger btn-custom btn-block">
+        Run Stutter Detection
+      </button>
+    </form>
+    <div id="dysResult" class="mt-2 font-weight-bold text-center"></div>
+
+    <!-- Voice Recording Section -->
+    <h2 class="mt-4">Voice Input (Record from Microphone)</h2>
+    <div class="record-btns">
+      <button id="startRecord" class="btn btn-primary btn-custom" type="button">Start Recording</button>
+      <button id="stopRecord" class="btn btn-danger btn-custom" type="button" disabled>Stop Recording</button>
+      <button id="clearRecord" class="btn btn-secondary btn-custom" type="button" style="display:none;">Clear Recording</button>
+    </div>
+    <div class="mt-3">
+      <audio id="recordedAudio" controls style="display: none;"></audio>
+      <div class="text-center mt-2">
+    <a id="downloadWavBtn" class="btn btn-outline-success btn-sm" style="display:none;">
+      Download Recording (WAV)
+    </a>
+
+    <a id="downloadMp3Btn" class="btn btn-outline-primary btn-sm" style="display:none; margin-left:8px;">
+      Download Recording (MP3)
+    </a>
+  </div>
+      <div id="recordedHint" class="text-muted mt-2" style="display:none; text-align:center;">
+        Recording ready. You can now Upload / Detect / Enhance / Remove Stutter using this recording.
+      </div>
+    </div>
+
+    <!-- Speech Visualization Canvas -->
+    <h2 class="mt-4">Fast speech recognition</h2>
+    <canvas id="waveform"></canvas>
+
+    <!-- Actions -->
+    <div class="mt-4">
+      <button type="button" id="btnEnhance" class="btn btn-info btn-custom btn-block">
+        Enhance Selected Audio (Auto-tune)
+      </button>
+
+      <button type="button" id="btnStutterRemove" class="btn btn-primary btn-custom btn-block mt-2">
+        Remove Stutter (Regenerate Voice)
+      </button>
+
+      <!-- Stutter Removal Results -->
+      <div id="stutterResult" style="display:none;" class="mt-4">
+        <h4>Original Transcript</h4>
+        <div id="rawTextBox" class="border p-2 mb-2" style="background:#f8f9fa;"></div>
+
+        <h4>Clean Transcript</h4>
+        <div id="cleanTextBox" class="border p-2 mb-2" style="background:#e8f5e9;"></div>
+
+        <h4>Cleaned Audio</h4>
+        <audio id="cleanAudioPlayer" controls></audio>
+      </div>
+
+      <!-- Player + download link for enhanced audio -->
+      <div class="text-center mt-2">
+        <audio id="enhancedAudio" controls style="display:none;"></audio>
+        <a id="enhanceDownload"
+           style="display:none;"
+           class="btn btn-outline-secondary btn-sm mt-2">
+          Download Enhanced Audio
+        </a>
+      </div>
+    </div>
+
+    <!-- ✅ Uploaded Audio Files Section (DB based audios) -->
+    <h2 class="mt-4">Uploaded Audio Files</h2>
+
+    {% if audios and audios|length > 0 %}
+      <ul class="list-group">
+        {% for audio in audios %}
+          <li class="list-group-item">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <strong>{{ audio.original_filename }}</strong>
+
+                <div class="mt-2">
+                  <a href="{{ url_for('stream_audio', audio_id=audio.id) }}" target="_blank">Browse</a>
+                </div>
+
+                <audio controls class="mt-2">
+                  <source src="{{ url_for('stream_audio', audio_id=audio.id) }}">
+                  Your browser does not support the audio element.
+                </audio>
+              </div>
+
+              <!-- ✅ DELETE BUTTON -->
+              <div class="ml-3">
+                <button
+                  class="btn btn-sm btn-danger"
+                  type="button"
+                  onclick="deleteFileById('{{ audio.id }}')">
+                  Delete
+                </button>
+              </div>
+
+              <button
+                  class="btn btn-sm btn-outline-primary mt-2"
+                  type="button"
+                  onclick="selectUploadedAudio('{{ audio.id }}', '{{ audio.original_filename }}')">
+                  Use for Stutter Removal
+              </button>
+
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No audio files uploaded yet.</p>
+    {% endif %}
+
+  </div>
+
+<script>
+  // =========================================================
+  // ✅ Recorded Audio Storage (so all features can use it)
+  // =========================================================
+  let recordedBlob = null;
+  let recordedBlobFilename = null;
+
+  // =========================================================
+  // ✅ Selected Uploaded Audio (DB row) for Stutter Removal DB flow
+  // You must call selectUploadedAudio(audioId, filename) from your list UI
+  // =========================================================
+  let selectedUploadedAudioId = null;
+  let selectedUploadedAudioName = null;
+
+  function selectUploadedAudio(id, name) {
+    selectedUploadedAudioId = id;
+    selectedUploadedAudioName = name;
+
+    // Optional: show selection label if you added <div id="selectedAudioLabel"></div>
+    const lbl = document.getElementById("selectedAudioLabel");
+    if (lbl) lbl.textContent = "Selected: " + name;
+
+    alert("Selected for stutter removal: " + name);
+  }
+
+  // =========================================================
+  // ✅ Helper: choose "file input OR recorded blob"
+  // Priority: selected file -> recorded blob
+  // =========================================================
+  function getSelectedSource() {
+    const input = document.getElementById('audioFile');
+
+    if (input && input.files && input.files.length) {
+      const f = input.files[0];
+      return { type: "file", data: f, name: f.name };
+    }
+
+    if (recordedBlob) {
+      return { type: "blob", data: recordedBlob, name: recordedBlobFilename || "recorded.webm" };
+    }
+
+    return null;
+  }
+
+  // =========================================================
+  // ✅ Upload handling:
+  // - If file(s) selected -> normal form submit to /audio_upload
+  // - Else if recorded audio exists -> POST to /upload_recorded
+  // =========================================================
+  const uploadForm = document.getElementById('uploadForm');
+  const audioInput = document.getElementById('audioFile');
+
+  if (uploadForm) {
+    uploadForm.addEventListener('submit', async function (e) {
+      // If user selected files -> allow normal browser submit
+      if (audioInput && audioInput.files && audioInput.files.length) return;
+
+      // If no selected file but has recording -> upload recorded
+      if (recordedBlob) {
+        e.preventDefault();
+
+        const fd = new FormData();
+        fd.append("file", recordedBlob, recordedBlobFilename || "recorded.webm");
+
+        try {
+          const resp = await fetch("/upload_recorded", { method: "POST", body: fd });
+          const data = await resp.json().catch(() => ({}));
+
+          if (!resp.ok || !data.success) {
+            alert((data && data.error) ? data.error : "Upload failed (check terminal).");
+            return;
+          }
+
+          alert("Recorded audio uploaded!");
+          location.reload();
+        } catch (err) {
+          console.error(err);
+          alert("Upload failed (check terminal).");
+        }
+        return;
+      }
+
+      // nothing selected and no recording
+      e.preventDefault();
+      alert("Please choose a file or record audio first.");
+    });
+  }
+
+  // =========================================================
+  // Voice Recording via MediaRecorder API
+  // =========================================================
+  let mediaRecorder;
+  let recordedChunks = [];
+  const startButton = document.getElementById('startRecord');
+  const stopButton = document.getElementById('stopRecord');
+  const clearButton = document.getElementById('clearRecord');
+  const recordedAudio = document.getElementById('recordedAudio');
+  const recordedHint = document.getElementById('recordedHint');
+  const waveformCanvas = document.getElementById('waveform');
+
+  startButton.addEventListener('click', async () => {
+    recordedChunks = [];
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert("Your browser does not support audio recording.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Use best supported mime type (avoids Safari/Edge issues)
+      let mimeType = '';
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mimeType = 'audio/webm;codecs=opus';
+      else if (MediaRecorder.isTypeSupported('audio/webm')) mimeType = 'audio/webm';
+      else if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
+
+      mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      mediaRecorder.start();
+
+      startButton.disabled = true;
+      stopButton.disabled = false;
+
+      mediaRecorder.ondataavailable = function (e) {
+        if (e.data.size > 0) recordedChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = function () {
+        // detect extension by mime
+        const mt = (mediaRecorder.mimeType || 'audio/webm').toLowerCase();
+        const ext = mt.includes('mp4') ? 'mp4' : 'webm';
+
+        recordedBlob = new Blob(recordedChunks, { type: mt });
+        recordedBlobFilename = `recorded_${Date.now()}.${ext}`;
+
+        const url = URL.createObjectURL(recordedBlob);
+        recordedAudio.src = url;
+        recordedAudio.style.display = 'block';
+
+        if (recordedHint) recordedHint.style.display = 'block';
+        if (clearButton) clearButton.style.display = 'inline-block';
+
+        visualizeAudio(recordedBlob);
+        
+const wavBtn = document.getElementById("downloadWavBtn");
+const mp3Btn = document.getElementById("downloadMp3Btn");
+
+// show buttons
+if (wavBtn) wavBtn.style.display = "inline-block";
+if (mp3Btn) mp3Btn.style.display = "inline-block";
+
+// WAV download handler
+if (wavBtn) {
+  wavBtn.onclick = async () => {
+    const fd = new FormData();
+    fd.append("file", recordedBlob, recordedBlobFilename || "recorded.webm");
+
+    const resp = await fetch("/convert_to_wav", { method: "POST", body: fd });
+    if (!resp.ok) return alert("WAV convert failed");
+
+    const wavBlob = await resp.blob();
+    const wavUrl = URL.createObjectURL(wavBlob);
+
+    wavBtn.href = wavUrl;
+    wavBtn.download = "recorded.wav";
+  };
+}
+
+// MP3 download handler
+if (mp3Btn) {
+  mp3Btn.onclick = async () => {
+    const fd = new FormData();
+    fd.append("file", recordedBlob, recordedBlobFilename || "recorded.webm");
+
+    const resp = await fetch("/convert_to_mp3", { method: "POST", body: fd });
+    if (!resp.ok) return alert("MP3 convert failed");
+
+    const mp3Blob = await resp.blob();
+    const mp3Url = URL.createObjectURL(mp3Blob);
+
+    mp3Btn.href = mp3Url;
+    mp3Btn.download = "recorded.mp3";
+  };
+}
+      };
+    } catch (err) {
+      console.error('Error accessing microphone:', err);
+      alert("Microphone access error. Check browser permissions.");
+    }
+  });
+
+  stopButton.addEventListener('click', () => {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      mediaRecorder.stop();
+    }
+    startButton.disabled = false;
+    stopButton.disabled = true;
+  });
+
+  if (clearButton) {
+    clearButton.addEventListener('click', () => {
+      recordedBlob = null;
+      recordedBlobFilename = null;
+
+      recordedAudio.pause();
+      recordedAudio.src = "";
+      recordedAudio.style.display = "none";
+
+      if (recordedHint) recordedHint.style.display = "none";
+      clearButton.style.display = "none";
+
+      // Clear waveform
+      const canvas = waveformCanvas;
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
+  }
+
+  // Waveform visualization
+  function visualizeAudio(fileBlob) {
+    const canvas = waveformCanvas;
+    const canvasCtx = canvas.getContext('2d');
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const reader = new FileReader();
+
+    reader.onload = function (ev) {
+      audioContext.decodeAudioData(ev.target.result, function (buffer) {
+        const rawData = buffer.getChannelData(0);
+        const width = canvas.width || 600;
+        const height = canvas.height || 120;
+        const samples = width;
+        const blockSize = Math.floor(rawData.length / samples);
+        const filteredData = [];
+
+        for (let i = 0; i < samples; i++) {
+          let sum = 0;
+          for (let j = 0; j < blockSize; j++) {
+            sum += Math.abs(rawData[(i * blockSize) + j]);
+          }
+          filteredData.push(sum / blockSize);
+        }
+
+        canvasCtx.clearRect(0, 0, width, height);
+        canvasCtx.fillStyle = '#ddd';
+        canvasCtx.fillRect(0, 0, width, height);
+        canvasCtx.lineWidth = 2;
+        canvasCtx.strokeStyle = '#4285F4';
+        canvasCtx.beginPath();
+
+        let x = 0;
+        const sliceWidth = width / samples;
+
+        filteredData.forEach((val, idx) => {
+          const y = height - (val * height);
+          if (idx === 0) canvasCtx.moveTo(x, y);
+          else canvasCtx.lineTo(x, y);
+          x += sliceWidth;
+        });
+
+        canvasCtx.stroke();
+      }, function (err) {
+        console.error("decodeAudioData failed:", err);
+      });
+    };
+
+    reader.readAsArrayBuffer(fileBlob);
+  }
+
+  // ================================
+  // ✅ Stutter / Dysarthria Detection
+  // Uses: file input OR recorded audio
+  // ================================
+  const dysForm = document.getElementById('dysForm');
+  const dysResult = document.getElementById('dysResult');
+
+  if (dysForm) {
+    dysForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const src = getSelectedSource();
+      if (!src) {
+        alert("Please choose a file or record audio first.");
+        return;
+      }
+
+      dysResult.textContent = 'Analyzing...';
+
+      const formData = new FormData();
+      formData.append('file', src.data, src.name);
+
+      try {
+        const resp = await fetch("{{ url_for('predict_dysarthria_route') }}", {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await resp.json().catch(() => ({}));
+
+        if (!resp.ok) {
+          dysResult.textContent = 'Error: ' + (data.error || ('HTTP ' + resp.status));
+          return;
+        }
+
+        if (data.prediction) dysResult.textContent = 'Prediction: ' + data.prediction;
+        else if (data.error) dysResult.textContent = 'Error: ' + data.error;
+        else dysResult.textContent = 'Unexpected response from server.';
+      } catch (err) {
+        console.error('Error calling endpoint:', err);
+        dysResult.textContent = 'Request failed. Please try again.';
+      }
+    });
+  }
+
+  // ================================
+  // ✅ Enhance Audio
+  // Uses: file input OR recorded audio
+  // ================================
+  const enhanceBtn = document.getElementById('btnEnhance');
+  const enhancedAudio = document.getElementById('enhancedAudio');
+  const enhanceDownload = document.getElementById('enhanceDownload');
+
+  if (enhanceBtn) {
+    enhanceBtn.addEventListener('click', async function () {
+      const src = getSelectedSource();
+      if (!src) {
+        alert("Please choose a file or record audio first.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', src.data, src.name);
+
+      try {
+        enhanceBtn.disabled = true;
+        const originalText = enhanceBtn.textContent;
+        enhanceBtn.textContent = 'Enhancing...';
+
+        const resp = await fetch("{{ url_for('enhance_audio_route') }}", {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!resp.ok) {
+          let msg = 'Server returned ' + resp.status;
+          try {
+            const errData = await resp.json();
+            if (errData.error) msg = errData.error;
+          } catch (_) { }
+          alert('Error enhancing audio: ' + msg);
+          enhanceBtn.textContent = originalText;
+          return;
+        }
+
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+
+        enhancedAudio.src = url;
+        enhancedAudio.style.display = 'block';
+
+        enhanceDownload.href = url;
+        enhanceDownload.download = 'enhanced_audio.wav';
+        enhanceDownload.style.display = 'inline-block';
+
+        enhanceBtn.textContent = originalText;
+      } catch (err) {
+        console.error('Error enhancing audio:', err);
+        alert('Error enhancing audio. Please try again.');
+        enhanceBtn.textContent = 'Enhance Selected Audio (Auto-tune)';
+      } finally {
+        enhanceBtn.disabled = false;
+      }
+    });
+  }
+
+  // ================================
+  // ✅ Remove Stutter (DB-Based)
+  // Requirement: user must select an uploaded audio row using selectUploadedAudio()
+  // ================================
+  const btnStutterRemove = document.getElementById('btnStutterRemove');
+  const rawTextBox = document.getElementById('rawTextBox');
+  const cleanTextBox = document.getElementById('cleanTextBox');
+  const cleanAudioPlayer = document.getElementById('cleanAudioPlayer');
+  const stutterResult = document.getElementById('stutterResult');
+
+  if (btnStutterRemove) {
+    btnStutterRemove.addEventListener('click', async () => {
+      if (!selectedUploadedAudioId) {
+        alert("Please select an uploaded audio from the list (Use for Stutter Removal).");
+        return;
+      }
+
+      try {
+        btnStutterRemove.disabled = true;
+        btnStutterRemove.textContent = 'Removing Stutter...';
+
+        const resp = await fetch(`/stutter_remove_db/${encodeURIComponent(selectedUploadedAudioId)}`, {
+          method: 'POST'
+        });
+
+        const data = await resp.json().catch(() => ({}));
+
+        if (!resp.ok || !data.success) {
+          alert((data && data.error) ? data.error : "Stutter removal failed.");
+          console.error("Backend response:", data);
+          return;
+        }
+
+        if (rawTextBox) rawTextBox.textContent = data.raw_text || '';
+        if (cleanTextBox) cleanTextBox.textContent = data.clean_text || '';
+
+        // stream cleaned audio from DB
+        const audioUrl = `/stutter_result_audio/${encodeURIComponent(data.result_id)}`;
+        cleanAudioPlayer.src = audioUrl;
+
+        stutterResult.style.display = 'block';
+        await cleanAudioPlayer.play().catch(() => { });
+
+      } catch (e) {
+        console.error(e);
+        alert('Stutter removal failed (check terminal).');
+      } finally {
+        btnStutterRemove.disabled = false;
+        btnStutterRemove.textContent = 'Remove Stutter (Regenerate Voice)';
+      }
+    });
+  }
+
+  // ================================
+  // ✅ Delete Uploaded File (old filename based)
+  // ================================
+  async function deleteFile(filename) {
+    if (!confirm(`Are you sure you want to delete "${filename}"?`)) return;
+
+    try {
+      const fd = new FormData();
+      const resp = await fetch(`/delete_audio/${encodeURIComponent(filename)}`, {
+        method: 'POST',
+        body: fd
+      });
+
+      if (resp.ok) {
+        location.reload();
+        return;
+      }
+
+      const data = await resp.json().catch(() => ({}));
+      alert(data.error || 'Failed to delete file');
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting file');
+    }
+  }
+
+  // ✅ Delete DB Audio by ID
+  async function deleteFileById(audioId) {
+    if (!confirm(`Are you sure you want to delete this audio?`)) return;
+
+    try {
+      const resp = await fetch(`/delete_uploaded_audio/${encodeURIComponent(audioId)}`, {
+        method: 'POST'
+      });
+
+      if (resp.ok) {
+        location.reload();
+        return;
+      }
+
+      const data = await resp.json().catch(() => ({}));
+      alert(data.error || 'Failed to delete audio');
+    } catch (err) {
+      console.error(err);
+      alert('Error deleting audio');
+    }
+  }
+</script>
+
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+</body>
+</html>

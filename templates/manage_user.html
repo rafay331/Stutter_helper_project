@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Files Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --danger: #f72585;
+            --danger-dark: #e5177b;
+            --success: #4cc9f0;
+            --warning: #f8961e;
+            --text: #2b2d42;
+            --text-light: #8d99ae;
+            --bg: #f8f9fa;
+            --card: #ffffff;
+            --border: #e9ecef;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: var(--card);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            overflow: hidden;
+        }
+        
+        h1, h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        h1 i, h2 i {
+            color: var(--primary);
+        }
+        
+        .flash {
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .flash:not(:empty) {
+            background-color: rgba(67, 97, 238, 0.1);
+            border-left: 4px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: none;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        
+        .btn-outline:hover {
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: var(--danger-dark);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+        }
+        
+        th {
+            text-align: left;
+            padding: 1rem;
+            font-weight: 500;
+            color: var(--text-light);
+            background-color: var(--bg);
+            position: sticky;
+            top: 0;
+        }
+        
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tr:hover td {
+            background-color: rgba(0, 0, 0, 0.01);
+        }
+        
+        .audio-player {
+            width: 100%;
+            max-width: 300px;
+            height: 40px;
+            border-radius: 8px;
+        }
+        
+        .empty-state {
+            padding: 3rem 1rem;
+            text-align: center;
+            color: var(--text-light);
+        }
+        
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+            opacity: 0.5;
+        }
+        
+        .empty-state p {
+            margin-top: 0.5rem;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background-color: var(--bg);
+            color: var(--text-light);
+        }
+        
+        /* Feedback Section Styles */
+        .feedback-section {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        .feedback-form {
+            background-color: var(--bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+        
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .rating-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .rating-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--text-light);
+            transition: all 0.2s;
+        }
+        
+        .rating-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .rating-btn.active {
+            color: var(--warning);
+        }
+        
+        .feedback-list {
+            margin-top: 2rem;
+        }
+        
+        .feedback-item {
+            background-color: var(--card);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .feedback-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .feedback-author {
+            font-weight: 500;
+        }
+        
+        .feedback-rating {
+            color: var(--warning);
+        }
+        
+        .feedback-date {
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+        
+        .feedback-content {
+            margin-top: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .container {
+                padding: 1.5rem;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .rating-group {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            <i class="fas fa-music"></i>
+            Audio Files Management
+        </h1>
+        
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div class="flash">
+                <i class="fas fa-info-circle"></i>
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        
+        <div class="btn-group">
+            <a href="{{ url_for('archive') }}" class="btn btn-primary">
+                <i class="fas fa-file-archive"></i>
+                Archive All Files
+            </a>
+            <a href="{{ url_for('export') }}" class="btn btn-outline">
+                <i class="fas fa-file-export"></i>
+                Export File List
+            </a>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Filename</th>
+                    <th>Uploaded</th>
+                    <th>Play</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if audio_files %}
+                    {% for file in audio_files %}
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <i class="fas fa-file-audio" style="color: var(--primary);"></i>
+                                <span>{{ file.filename }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge">
+                                <i class="far fa-clock"></i>
+                                {{ file.upload_time }}
+                            </span>
+                        </td>
+                        <td>
+                            <audio controls class="audio-player">
+                                <source src="{{ url_for('uploaded_file', filename=file.filename) }}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                        </td>
+                        <td>
+                            <form action="{{ url_for('delete_audio', filename=file.filename) }}" method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash-alt"></i>
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4">
+                            <div class="empty-state">
+                                <i class="fas fa-folder-open"></i>
+                                <h3>No Audio Files Found</h3>
+                                <p>Upload some audio files to get started</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+        <!-- User Feedback Section -->
+        <div class="feedback-section">
+            <div class="feedback-header">
+                <h2>
+                    <i class="fas fa-comment-alt"></i>
+                    Manage Feedback
+                </h2>
+                <div class="feedback-actions">
+                    <button class="btn btn-outline btn-sm">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+            
+            <div class="feedback-list">
+                <!-- Mock Feedback Entry 1 -->
+                <div class="feedback-item">
+                    <div class="feedback-meta">
+                        <div>
+                            <span class="feedback-author">John D.</span>
+                            <span class="feedback-date">2023-10-15 14:30</span>
+                        </div>
+                        <div class="feedback-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="far fa-star"></i>
+                        </div>
+                    </div>
+                    <div class="feedback-content">
+                        The audio quality is excellent, but the interface could be more intuitive. I had some trouble finding the export feature at first.
+                    </div>
+                    <div class="feedback-actions">
+                        <form action="#" method="POST">
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Mock Feedback Entry 2 -->
+                <div class="feedback-item">
+                    <div class="feedback-meta">
+                        <div>
+                            <span class="feedback-author">Sarah M.</span>
+                            <span class="feedback-date">2023-10-14 09:15</span>
+                        </div>
+                        <div class="feedback-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <div class="feedback-content">
+                        Absolutely love this tool! It's transformed my workflow. The audio processing is fast and accurate. Would recommend to anyone working with audio files.
+                    </div>
+                    <div class="feedback-actions">
+                        <form action="#" method="POST">
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Mock Feedback Entry 3 -->
+                <div class="feedback-item">
+                    <div class="feedback-meta">
+                        <div>
+                            <span class="feedback-author">Alex T.</span>
+                            <span class="feedback-date">2023-10-13 16:45</span>
+                        </div>
+                        <div class="feedback-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="far fa-star"></i>
+                            <i class="far fa-star"></i>
+                            <i class="far fa-star"></i>
+                        </div>
+                    </div>
+                    <div class="feedback-content">
+                        The tool is okay but lacks some advanced features I need. The processing time is slower than I expected for larger files.
+                    </div>
+                    <div class="feedback-actions">
+                        <form action="#" method="POST">
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Rating selector functionality
+        document.querySelectorAll('.rating-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const rating = parseInt(this.dataset.rating);
+                const stars = document.querySelectorAll('.rating-btn');
+                
+                // Update star display
+                stars.forEach((star, index) => {
+                    if (index < rating) {
+                        star.innerHTML = '<i class="fas fa-star"></i>';
+                        star.classList.add('active');
+                    } else {
+                        star.innerHTML = '<i class="far fa-star"></i>';
+                        star.classList.remove('active');
+                    }
+                });
+                
+                // Update hidden input value
+                document.getElementById('ratingValue').value = rating;
+            });
+        });
+    </script>
+</body>
+</html>

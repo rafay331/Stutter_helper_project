@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Final Results</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Google Font & Bootstrap CSS -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #74ebd5, #ACB6E5);
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      margin: 40px auto;
+      max-width: 900px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+      animation: fadeIn 1s ease-out;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    h2 {
+      font-size: 1.8rem;
+      margin-top: 40px;
+      margin-bottom: 20px;
+      color: #555;
+    }
+    .list-group-item {
+      border: none;
+      background: #f7f7f7;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      padding: 15px 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .card {
+      border: none;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      transition: transform 0.3s ease;
+    }
+    .card:hover { transform: translateY(-5px); }
+    .card-header {
+      background: #4285F4;
+      color: #fff;
+      font-size: 1.1rem;
+      padding: 15px 20px;
+    }
+    .card-body { padding: 20px; }
+    .audio-player {
+      width: 100%;
+      margin-top: 15px;
+      border-radius: 5px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .result-section { margin-bottom: 40px; }
+    .btn-return {
+      margin-top: 30px;
+      padding: 12px 25px;
+      font-size: 1rem;
+      border-radius: 8px;
+    }
+    .muted {
+      color: #6b7280;
+      font-size: 0.95rem;
+    }
+    .chip {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.35);
+      font-size: 0.85rem;
+      margin-left: 8px;
+    }
+    .small-meta {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-top: 8px;
+    }
+    .text-block {
+      background: #f7f7f7;
+      border-radius: 10px;
+      padding: 14px 16px;
+      border: 1px solid #e5e7eb;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .btn-row {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Final Results</h1>
+
+    <!-- Uploaded Audio Files List (DB via API) -->
+    <h2>Uploaded Audio Files</h2>
+    <div id="uploadedWrap">
+      <p class="text-center muted">Loading uploaded audios...</p>
+    </div>
+
+    <!-- Result Cards (DB via API) -->
+    <div class="result-section">
+      <h2>Stutter Removed Results</h2>
+      <div id="cleanedWrap">
+        <p class="text-center muted">Loading results...</p>
+      </div>
+    </div>
+
+    <div class="text-center">
+      <a href="/" class="btn btn-secondary btn-return">Return Home</a>
+    </div>
+  </div>
+
+  <!-- Bootstrap and jQuery JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function renderUploaded(uploaded) {
+      const wrap = document.getElementById("uploadedWrap");
+      if (!uploaded || uploaded.length === 0) {
+        wrap.innerHTML = `<p class="text-center">No audio files uploaded.</p>`;
+        return;
+      }
+
+      const items = uploaded.map(a => {
+        const name = escapeHtml(a.original_filename || a.stored_filename || "Audio");
+        const url  = escapeHtml(a.listen_url || "");
+        return `
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong>${name}</strong>
+              ${a.uploaded_at ? `<div class="small-meta">Uploaded: ${escapeHtml(a.uploaded_at)}</div>` : ""}
+            </div>
+            ${url ? `<a href="${url}" target="_blank" class="btn btn-sm btn-outline-primary">Listen</a>` : `<span class="muted">No URL</span>`}
+          </li>
+        `;
+      }).join("");
+
+      wrap.innerHTML = `<ul class="list-group">${items}</ul>`;
+    }
+
+    function renderCleaned(cleaned) {
+      const wrap = document.getElementById("cleanedWrap");
+      if (!cleaned || cleaned.length === 0) {
+        wrap.innerHTML = `<p class="text-center">No results to display. Please process your audio files.</p>`;
+        return;
+      }
+
+      const cards = cleaned.map(r => {
+        const title    = escapeHtml(r.original_filename || "Processed Audio");
+        const url      = escapeHtml(r.listen_url || "");
+        const created  = escapeHtml(r.created_at || "");
+        const rid      = escapeHtml(r.id || "");
+        const rawText  = escapeHtml(r.raw_text || "");
+        const cleanTxt = escapeHtml(r.clean_text || "");
+
+        // ✅ Download URL: same endpoint + ?download=1
+        const downloadUrl = url ? (url + (url.includes("?") ? "&" : "?") + "download=1") : "";
+
+        return `
+          <div class="card">
+            <div class="card-header">
+              ${title}
+              ${rid ? `<span class="chip">Result #${rid}</span>` : ""}
+            </div>
+
+            <div class="card-body">
+              <h5 class="card-title">Final Audio</h5>
+
+              ${url ? `
+                <audio class="audio-player" controls>
+                  <source src="${url}" type="audio/mpeg">
+                  Your browser does not support the audio element.
+                </audio>
+
+                <div class="btn-row">
+                  <a href="${downloadUrl}" class="btn btn-sm btn-success">
+                    Download MP3
+                  </a>
+                </div>
+              ` : `<p class="muted">Audio URL not found.</p>`}
+
+              ${created ? `<div class="small-meta">Generated: ${created}</div>` : ""}
+
+              <hr>
+
+              <h5>Raw Text</h5>
+              <div class="text-block">${rawText || "<span class='muted'>No raw text saved.</span>"}</div>
+
+              <hr>
+
+              <h5>Clean Text</h5>
+              <div class="text-block">${cleanTxt || "<span class='muted'>No clean text saved.</span>"}</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      wrap.innerHTML = cards;
+    }
+
+    async function loadResults() {
+      const uploadedWrap = document.getElementById("uploadedWrap");
+      const cleanedWrap  = document.getElementById("cleanedWrap");
+
+      try {
+        const res = await fetch("/api/results/audios", { credentials: "same-origin" });
+        const data = await res.json();
+
+        if (!data.success) {
+          const msg = escapeHtml(data.error || "Failed to load results");
+          uploadedWrap.innerHTML = `<p class="text-center text-danger">${msg}</p>`;
+          cleanedWrap.innerHTML  = `<p class="text-center text-danger">${msg}</p>`;
+          return;
+        }
+
+        renderUploaded(data.uploaded);
+        renderCleaned(data.cleaned);
+
+      } catch (e) {
+        console.error(e);
+        uploadedWrap.innerHTML = `<p class="text-center text-danger">Error loading uploaded audios.</p>`;
+        cleanedWrap.innerHTML  = `<p class="text-center text-danger">Error loading results.</p>`;
+      }
+    }
+
+    loadResults();
+  </script>
+</body>
+</html>

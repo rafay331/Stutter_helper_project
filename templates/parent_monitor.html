@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Parent — Monitor Child</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap (optional but handy) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Chart.js for the line chart -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    body { background:#0f172a; color:#e5e7eb; }
+    .page { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+    .card, .table { background:#111827; border-color:#1f2937; }
+    .kpi .value { font-size: 1.6rem; font-weight: 700; }
+    .muted { color:#94a3b8; }
+    a.btn, button.btn { border-radius: 12px; }
+    .form-select, .form-control { background:#0b1226; color:#e5e7eb; border-color:#1f2937; }
+    .form-select:focus, .form-control:focus { box-shadow: none; border-color:#22d3ee; }
+    .table th, .table td { color:#e5e7eb; }
+    .table thead th { color:#94a3b8; }
+    .badge-high { background:#ef4444; }
+    .badge-normal { background:#22c55e; }
+    .link-plain { color:#22d3ee; text-decoration: none; }
+    .link-plain:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h2 class="m-0">Monitor Child</h2>
+      <div class="muted">Parent ID: {{ parent_id }}</div>
+    </div>
+
+    <!-- Child selector -->
+    <form class="row g-2 align-items-center mb-3" method="get">
+      <div class="col-auto">
+        <label for="child_id" class="col-form-label">Child</label>
+      </div>
+      <div class="col-auto">
+        <select id="child_id" name="child_id" class="form-select">
+          {% for c in children %}
+            <option value="{{ c.id }}" {{ 'selected' if c.id == selected_child.id else '' }}>
+              {{ c.name }} (ID {{ c.id }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-info text-dark">Load</button>
+      </div>
+      <div class="col-auto ms-auto">
+        <a class="btn btn-outline-info" href="{{ view_report_url }}">View Progress Report</a>
+        <a class="btn btn-info text-dark ms-2" href="{{ export_pdf_url }}">Export PDF</a>
+      </div>
+    </form>
+
+    <!-- KPI cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="card p-3 kpi">
+          <div class="muted">Completed</div>
+          <div class="value">{{ kpis.completed }}</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card p-3 kpi">
+          <div class="muted">Pending</div>
+          <div class="value">{{ kpis.pending }}</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card p-3 kpi">
+          <div class="muted">Overdue</div>
+          <div class="value">{{ kpis.overdue }}</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card p-3 kpi">
+          <div class="muted">Focus (min)</div>
+          <div class="value">{{ kpis.focus_minutes }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="card p-3 mb-4">
+      <div class="d-flex align-items-center justify-content-between">
+        <h5 class="m-0">Productivity (last 7 days)</h5>
+        <span class="muted">Child: {{ selected_child.name }}</span>
+      </div>
+      <canvas id="focusChart" height="120"></canvas>
+    </div>
+
+    <div class="row g-4">
+      <!-- Upcoming tasks -->
+      <div class="col-12 col-lg-6">
+        <div class="card p-3 h-100">
+          <h5 class="mb-3">Upcoming Tasks</h5>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th style="width:50%">Title</th>
+                  <th>Due</th>
+                  <th>Priority</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for t in upcoming %}
+                <tr>
+                  <td>{{ t.title }}</td>
+                  <td>{{ t.due_at }}</td>
+                  <td>
+                    {% if t.priority == 'High' %}
+                      <span class="badge badge-high">High</span>
+                    {% else %}
+                      <span class="badge badge-normal">Normal</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td colspan="3" class="muted">No upcoming tasks.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="text-end">
+            <a class="link-plain" href="#">View all tasks →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent completions -->
+      <div class="col-12 col-lg-6">
+        <div class="card p-3 h-100">
+          <h5 class="mb-3">Recent Completions</h5>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th style="width:60%">Title</th>
+                  <th>Completed</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in completed %}
+                <tr>
+                  <td>{{ r.title }}</td>
+                  <td>{{ r.completed_at }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td colspan="2" class="muted">Nothing completed recently.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="text-end">
+            <a class="link-plain" href="#">View history →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart bootstrapping -->
+<!-- Chart bootstrapping -->
+<script>
+  // ✅ Wrap variables inside quotes so JS treats them as text
+  const labels = JSON.parse('{{ chart_labels_json | safe }}');
+  const data   = JSON.parse('{{ chart_series_json | safe }}');
+
+  const ctx = document.getElementById('trend').getContext('2d');
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Focus minutes',
+        data: data,
+        borderColor: '#22d3ee',
+        tension: 0.25,
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks:{ color:'#94a3b8' }, grid:{ color:'#1f2937' } },
+        y: { ticks:{ color:'#94a3b8' }, grid:{ color:'#1f2937' }, beginAtZero:true }
+      }
+    }
+  });
+</script>
+
+</body>
+</html>

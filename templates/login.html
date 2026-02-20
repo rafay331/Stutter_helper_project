@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        .border {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+        .msg {
+            color: #e63946;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .textbox {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .textbox:focus {
+            border-color: #6e8efb;
+            box-shadow: 0 0 8px rgba(110, 142, 251, 0.3);
+            outline: none;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #6e8efb, #a777e3);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(110, 142, 251, 0.4);
+        }
+        .bottom {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #555;
+        }
+        .bottom a {
+            color: #6e8efb;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+        .bottom a:hover {
+            color: #a777e3;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="border">
+        <div class="header">
+            <h1>Login</h1>
+        </div>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="msg">{{ messages[0] }}</div>
+            {% endif %}
+        {% endwith %}
+        <form action="{{ url_for('login') }}" method="post">
+            <input id="identifier" name="identifier" type="text" placeholder="Username or Email" class="textbox" required/>
+            <input id="password" name="password" type="password" placeholder="Enter Your Password" class="textbox" required/>
+            <input type="submit" class="btn" value="Sign In">
+        </form>
+        <p class="bottom">Don't have an account? <a href="{{ url_for('register') }}">Sign Up here</a></p>
+        <p class="bottom"><a href="{{ url_for('forgot_password') }}">Forgot Password?</a></p>
+        
+        <!-- Google Login -->
+        <form action="{{ url_for('force_google_login') }}">
+            <button type="submit" class="btn" style="margin-top: 10px;">Login with Google</button>
+        </form>
+    </div>
+</body>
+</html>

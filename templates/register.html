@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <style>
+        /* Beautiful background with gradient */
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+        }
+
+        .border { 
+            background: #ffffff; 
+            padding: 35px; 
+            border-radius: 12px; 
+            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.2); 
+            width: 350px; 
+            text-align: center;
+            transition: 0.3s ease-in-out;
+        }
+
+        .border:hover {
+            transform: translateY(-5px);
+        }
+
+        .header { margin-bottom: 20px; }
+        .word { color: #333333; font-size: 24px; font-weight: 600; }
+
+        .textbox { 
+            width: 100%; 
+            padding: 12px; 
+            margin-bottom: 15px; 
+            border: 1px solid #cccccc; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-size: 14px;
+            transition: border 0.3s ease;
+        }
+
+        .textbox:focus {
+            border: 1px solid #4facfe;
+            outline: none;
+            box-shadow: 0 0 8px rgba(79, 172, 254, 0.5);
+        }
+
+        .btn { 
+            width: 100%; 
+            padding: 12px; 
+            background: linear-gradient(to right, #4facfe, #00f2fe); 
+            border: none; 
+            border-radius: 8px; 
+            color: white; 
+            font-size: 16px; 
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s ease-in-out;
+        }
+
+        .btn:hover { 
+            background: linear-gradient(to right, #00f2fe, #4facfe);
+            transform: scale(1.05);
+        }
+
+        .msg { 
+            color: #ff3b3b; 
+            margin-bottom: 10px; 
+            font-size: 14px; 
+            font-weight: 500;
+        }
+
+        .bottom { 
+            font-size: 14px; 
+            color: #007bff; 
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .bottom:hover { text-decoration: underline; }
+
+        #strength-meter { 
+            height: 8px; 
+            width: 100%; 
+            border-radius: 5px; 
+            transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="border">
+        <div class="header">
+            <h1 class="word">Register</h1>
+        </div>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="msg">{{ messages[0] }}</div>
+            {% endif %}
+        {% endwith %}
+        <form action="{{ url_for('register') }}" method="post">
+            <input id="username" name="username" type="text" placeholder="Enter Your Username" class="textbox"/>
+            <input id="email" name="email" type="email" placeholder="Enter Your Email" class="textbox"/>
+            <input id="password" name="password" type="password" placeholder="Enter Your Password" class="textbox" onkeyup="checkPasswordStrength(this.value)"/>
+            <div id="strength-meter"></div>
+            <input type="submit" class="btn" value="Sign Up">
+        </form>
+        <p class="bottom">Already have an account? <a class="bottom" href="{{url_for('login')}}">Login here</a></p>
+    </div>
+    <script>
+        function checkPasswordStrength(password) {
+            let strength = 0;
+            if (password.length >= 8) strength += 25;
+            if (/[A-Z]/.test(password)) strength += 25;
+            if (/[0-9]/.test(password)) strength += 25;
+            if (/[^A-Za-z0-9]/.test(password)) strength += 25;
+
+            const meter = document.getElementById('strength-meter');
+            meter.style.width = `${strength}%`;
+            meter.style.backgroundColor = 
+                strength <= 25 ? 'red' : 
+                strength <= 50 ? 'orange' : 
+                strength <= 75 ? 'yellow' : 
+                'green';
+        }
+    </script>
+</body>
+</html>

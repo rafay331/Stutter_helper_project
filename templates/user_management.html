@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>User Management Module</title>
+  <style>
+    :root{
+      --bg:#f5f7fb;
+      --card:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --primary:#2f6fed;
+      --primary-dark:#1f57c9;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .page{
+      max-width: 1200px;
+      margin: 36px auto;
+      padding: 0 18px 60px;
+    }
+
+    h1{
+      text-align:center;
+      margin: 6px 0 18px;
+      font-size: 26px;
+      font-weight: 700;
+    }
+    h2{
+      text-align:center;
+      margin: 26px 0 14px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #374151;
+    }
+
+    .strip{
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 16px;
+      box-shadow: 0 8px 20px rgba(17,24,39,0.06);
+    }
+
+    .field{
+      width: 100%;
+      height: 42px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      outline: none;
+      background: #fff;
+      font-size: 14px;
+    }
+    .field:focus{
+      border-color: rgba(47,111,237,0.6);
+      box-shadow: 0 0 0 3px rgba(47,111,237,0.12);
+    }
+
+    .stack{
+      display: grid;
+      gap: 12px;
+    }
+
+    .btn{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 38px;
+      padding: 0 14px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 120ms ease;
+      user-select: none;
+      text-decoration: none;
+    }
+    .btn-primary{
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover{ background: var(--primary-dark); }
+    .btn-outline{
+      background: #fff;
+      border-color: rgba(47,111,237,0.35);
+      color: var(--primary);
+    }
+    .btn-outline:hover{
+      border-color: var(--primary);
+      background: rgba(47,111,237,0.06);
+    }
+
+    .left-actions{
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .table-wrap{
+      overflow-x:auto;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+    }
+    table{
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1300px; /* wider now because more columns */
+    }
+    thead th{
+      text-align: left;
+      font-size: 12px;
+      letter-spacing: .02em;
+      color: #4b5563;
+      background: #f3f4f6;
+      border-bottom: 1px solid var(--line);
+      padding: 12px 12px;
+      white-space: nowrap;
+    }
+    tbody td{
+      padding: 12px 12px;
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+      color: #111827;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    tbody tr:last-child td{ border-bottom: none; }
+
+    .col-id{ width: 80px; color: #374151; }
+    .col-actions{ width: 170px; }
+
+    .action-row{
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .center-actions{
+      display:flex;
+      justify-content:center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .file-row{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      flex-wrap: wrap;
+    }
+    input[type="file"]{
+      width: 100%;
+      max-width: 560px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      font-size: 13px;
+      color: #374151;
+    }
+
+    .section-gap{ margin-top: 14px; }
+
+    .hint{
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: left;
+    }
+
+    .muted-cell{
+      color: var(--muted);
+      font-size: 13px;
+      max-width: 260px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 560px){
+      .center-actions{ flex-direction: column; align-items: stretch; }
+      .btn{ width: 100%; }
+      input[type="file"]{ max-width: 100%; }
+      .action-row{ justify-content: flex-start; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <h1>User Management Module</h1>
+
+    <!-- Search Bar (ONLY username/email search - backend must match) -->
+    <div class="strip" style="margin-bottom:12px;">
+      <form method="GET" action="{{ url_for('user_management_page') }}" style="display:flex; gap:10px; flex-wrap:wrap;">
+        <input
+          class="field"
+          type="text"
+          name="q"
+          placeholder="Search by username or email..."
+          value="{{ q }}"
+          style="flex:1; min-width:240px;"
+        />
+        <button class="btn btn-primary" type="submit">Search</button>
+        <a class="btn btn-outline" href="{{ url_for('user_management_page') }}">Clear</a>
+      </form>
+      <p class="hint">Search matches only <b>username</b> and <b>email</b>.</p>
+    </div>
+
+    <!-- Existing Users -->
+    <h2>Existing Users</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-id">ID</th>
+            <th>Email</th>
+            <th>Password</th>
+            <th>Full Name</th>
+            <th>Username</th>
+            <th>DOB</th>
+            <th>Bio</th>
+            <th>Phone</th>
+            <th>Address</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% if users %}
+            {% for user in users %}
+              {# Expected order from backend:
+                 0:id, 1:email, 2:password, 3:full_name, 4:username, 5:dob, 6:bio, 7:phone, 8:address
+              #}
+              <tr>
+                <td class="col-id">{{ user[0] }}</td>
+                <td>{{ user[1] }}</td>
+                <td class="muted-cell" title="{{ user[2] }}">{{ user[2] }}</td>
+                <td>{{ user[3] or '' }}</td>
+                <td>{{ user[4] or '' }}</td>
+                <td>{{ user[5] or '' }}</td>
+                <td class="muted-cell" title="{{ user[6] }}">{{ user[6] or '' }}</td>
+                <td>{{ user[7] or '' }}</td>
+                <td class="muted-cell" title="{{ user[8] }}">{{ user[8] or '' }}</td>
+
+                <td class="col-actions">
+                  <div class="action-row">
+                    <button
+                      class="btn btn-outline"
+                      type="button"
+                      onclick="openEditModal('{{ user[0] }}','{{ user[4] }}','{{ user[1] }}')">
+                      Edit
+                    </button>
+
+                    <form action="{{ url_for('delete_user', user_id=user[0]) }}"
+                          method="POST"
+                          style="display:inline;">
+                      <button class="btn btn-primary" type="submit">
+                        Delete
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="10" style="text-align:center; color:#6b7280; padding:16px;">
+                No users found.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Data Operations -->
+    <h2 class="section-gap">Data Operations</h2>
+    <div class="center-actions">
+      <a class="btn btn-outline" href="{{ url_for('export_users_excel') }}">Export Users</a>
+    </div>
+
+    
+  </div>
+
+  <!-- Edit User Modal (still edits ONLY username + email) -->
+  <div id="editModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4);">
+    <div style="max-width:520px; margin:10vh auto; background:#fff; border-radius:12px; padding:18px; border:1px solid #e5e7eb;">
+      <h2 style="margin:0 0 10px; text-align:left;">Edit User</h2>
+
+      <form method="POST" action="{{ url_for('edit_user') }}">
+  <input type="hidden" id="edit_id" name="id">
+
+  <div style="display:grid; gap:10px;">
+    <input class="field" id="edit_full_name" name="full_name" type="text" placeholder="Full Name">
+    <input class="field" id="edit_username" name="username" type="text" placeholder="Username">
+    <input class="field" id="edit_email" name="email" type="email" placeholder="Email" required>
+    <input class="field" id="edit_dob" name="dob" type="date" placeholder="DOB">
+    <input class="field" id="edit_phone" name="phone" type="text" placeholder="Phone">
+    <input class="field" id="edit_address" name="address" type="text" placeholder="Address">
+    <textarea class="field" id="edit_bio" name="bio" placeholder="Bio" style="height:90px; resize:vertical;"></textarea>
+  </div>
+
+  <p class="hint" style="margin-top:10px;">
+    Password is not editable from this screen.
+  </p>
+
+  <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:14px;">
+    <button type="button" class="btn btn-outline" onclick="closeEditModal()">Cancel</button>
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+  </div>
+</form>
+
+    </div>
+  </div>
+
+  <script>
+    function openEditModal(id, full_name, username, email, dob, bio, phone, address){
+    document.getElementById("edit_id").value = id;
+
+    document.getElementById("edit_full_name").value = full_name || "";
+    document.getElementById("edit_username").value = username || "";
+    document.getElementById("edit_email").value = email || "";
+
+    // dob must be yyyy-mm-dd for <input type="date">
+    document.getElementById("edit_dob").value = dob || "";
+
+    document.getElementById("edit_bio").value = bio || "";
+    document.getElementById("edit_phone").value = phone || "";
+    document.getElementById("edit_address").value = address || "";
+
+    document.getElementById("editModal").style.display = "block";
+  }
+
+    function closeEditModal(){
+      document.getElementById("editModal").style.display = "none";
+    }
+
+    // close if clicked outside the box
+    document.getElementById("editModal").addEventListener("click", function(e){
+      if(e.target === this) closeEditModal();
+    });
+  </script>
+
+</body>
+</html>

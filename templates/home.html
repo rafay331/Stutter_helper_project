@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home - Stutter-Helper</title>
+
+  <!-- Font (same modern vibe) -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      /* Therapist-dashboard-like theme */
+      --bg1:#6a79f3;
+      --bg2:#7b55b7;
+
+      --card:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+
+      --brand:#6a79f3;
+      --brand2:#7b55b7;
+
+      --border:#e5e7eb;
+
+      --shadow: 0 18px 45px rgba(17,24,39,.14);
+      --shadow2: 0 10px 24px rgba(17,24,39,.12);
+      --radius:18px;
+
+      --green:#16a34a;
+      --red:#dc2626;
+      --amber:#d97706;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:'Roboto', sans-serif;
+      color:var(--text);
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+
+    a{ text-decoration:none; }
+
+    /* NAVBAR (matching therapist vibe) */
+    .navbar{
+      position: sticky;
+      top:0;
+      z-index: 10;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 26px;
+      background: linear-gradient(90deg, var(--brand), var(--brand2));
+      color:#fff;
+      box-shadow: 0 10px 30px rgba(0,0,0,.12);
+    }
+    .logo{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:800;
+      letter-spacing:.2px;
+      font-size:1.35rem;
+    }
+    .logo-dot{
+      width:10px;height:10px;border-radius:50%;
+      background: rgba(255,255,255,.95);
+      box-shadow: 0 0 0 6px rgba(255,255,255,.15);
+    }
+
+    .navlinks{
+      list-style:none;
+      display:flex;
+      gap:18px;
+      margin:0;
+      padding:0;
+      align-items:center;
+    }
+    .navlinks a{
+      color:#fff;
+      font-weight:500;
+      padding:10px 12px;
+      border-radius:12px;
+      transition: background .18s ease, transform .18s ease;
+    }
+    .navlinks a:hover{
+      background: rgba(255,255,255,.16);
+      transform: translateY(-1px);
+    }
+
+    /* PAGE LAYOUT */
+    .page{
+      width: min(1050px, calc(100% - 48px));
+      margin: 34px auto 26px;
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap: 18px;
+      align-items:center;
+      justify-content:flex-start;
+    }
+
+    /* HERO CARD (like therapist panels) */
+    .card{
+      width:100%;
+      max-width: 900px;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(229,231,235,.9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+
+    /* subtle top shine strip */
+    .card::before{
+      content:"";
+      position:absolute;
+      left:0; top:0;
+      height:6px; width:100%;
+      background: linear-gradient(90deg, var(--brand), var(--brand2));
+      opacity:.95;
+    }
+
+    .card-inner{
+      padding: 44px 44px 38px;
+      text-align:center;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(106,121,243,.12);
+      border: 1px solid rgba(106,121,243,.22);
+      color: #2a3a8e;
+      font-weight:600;
+      font-size:.95rem;
+      margin-top: 6px;
+    }
+    .badge span{
+      width:9px;height:9px;border-radius:50%;
+      background: var(--brand);
+      box-shadow: 0 0 0 6px rgba(106,121,243,.18);
+    }
+
+    h1{
+      margin: 22px 0 10px;
+      font-size: clamp(2rem, 3.2vw, 2.75rem);
+      line-height:1.15;
+      letter-spacing:-.3px;
+    }
+    .sub{
+      margin: 0 auto 26px;
+      max-width: 560px;
+      color: var(--muted);
+      font-size: 1.08rem;
+      line-height: 1.65;
+    }
+
+    .actions{
+      display:flex;
+      gap:12px;
+      justify-content:center;
+      flex-wrap:wrap;
+      margin-top: 8px;
+    }
+
+    /* BUTTONS (pill-ish like therapist UI) */
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      padding: 12px 22px;
+      border-radius: 999px;
+      font-weight:700;
+      border: 1px solid transparent;
+      cursor:pointer;
+      transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+      user-select:none;
+    }
+    .btn:active{ transform: translateY(0); }
+
+    .btn-primary{
+      color:#fff;
+      background: linear-gradient(90deg, var(--brand), var(--brand2));
+      box-shadow: var(--shadow2);
+    }
+    .btn-primary:hover{
+      transform: translateY(-2px);
+      opacity:.98;
+    }
+
+    .btn-ghost{
+      color: var(--text);
+      background: #fff;
+      border-color: rgba(229,231,235,.95);
+    }
+    .btn-ghost:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(17,24,39,.10);
+    }
+
+    /* ✅ Speech Therapy (patient) card styles */
+    .section-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      padding: 22px 26px 14px;
+    }
+    .section-title{
+      margin:0;
+      font-size: 1.15rem;
+      font-weight: 800;
+    }
+    .section-sub{
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: .95rem;
+      font-weight: 600;
+      text-align:right;
+    }
+
+    .section-body{
+      padding: 0 26px 24px;
+    }
+
+    .assignments{
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+
+    .item{
+      background:#fff;
+      border: 1px solid rgba(229,231,235,.95);
+      border-radius: 14px;
+      padding: 14px 14px;
+      box-shadow: var(--shadow2);
+    }
+    .item-top{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+      flex-wrap:wrap;
+    }
+    .item-title{
+      font-weight:800;
+      font-size: 1.02rem;
+      margin:0;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight:800;
+      font-size: .85rem;
+      border: 1px solid rgba(229,231,235,.95);
+      background: rgba(106,121,243,.10);
+      color:#2a3a8e;
+    }
+    .meta{
+      margin-top:8px;
+      color: var(--muted);
+      font-size: .95rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+    .meta strong{ color: var(--text); }
+
+    .small-muted{
+      color: var(--muted);
+      font-weight:700;
+      font-size: .95rem;
+      text-align:left;
+    }
+
+    /* ✅ Recorder UI */
+    .rec-wrap{
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed rgba(229,231,235,.95);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .rec-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .mini-btn{
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 800;
+      border: 1px solid rgba(229,231,235,.95);
+      background:#fff;
+      cursor:pointer;
+      transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    }
+    .mini-btn:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 10px 18px rgba(17,24,39,.10);
+    }
+    .mini-btn:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      transform:none;
+      box-shadow:none;
+    }
+    .mini-primary{
+      background: linear-gradient(90deg, var(--brand), var(--brand2));
+      color:#fff;
+      border-color: transparent;
+    }
+    .mini-danger{
+      background: rgba(220,38,38,.10);
+      color: var(--red);
+      border-color: rgba(220,38,38,.25);
+    }
+    .mini-ok{
+      background: rgba(22,163,74,.10);
+      color: var(--green);
+      border-color: rgba(22,163,74,.25);
+    }
+
+    .rec-status{
+      font-weight: 800;
+      font-size: .92rem;
+      color: var(--muted);
+    }
+    .rec-status.live{
+      color: var(--amber);
+    }
+
+    .msg{
+      font-weight:800;
+      font-size:.92rem;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(229,231,235,.95);
+      background: rgba(106,121,243,.08);
+      color:#2a3a8e;
+      display:none;
+    }
+    .msg.ok{
+      background: rgba(22,163,74,.10);
+      border-color: rgba(22,163,74,.22);
+      color: var(--green);
+      display:block;
+    }
+    .msg.err{
+      background: rgba(220,38,38,.10);
+      border-color: rgba(220,38,38,.22);
+      color: var(--red);
+      display:block;
+    }
+
+    audio{
+      width: 100%;
+      outline: none;
+      border-radius: 12px;
+    }
+
+    /* footer */
+    .footer{
+      background: rgba(17,24,39,.65);
+      color: rgba(255,255,255,.92);
+      text-align:center;
+      padding: 16px 18px;
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255,255,255,.12);
+    }
+    .footer p{
+      margin:0;
+      font-size: .95rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 720px){
+      .navbar{ padding: 12px 16px; }
+      .page{ width: calc(100% - 26px); margin-top: 24px; }
+      .card-inner{ padding: 30px 20px 26px; }
+      .navlinks{ gap: 10px; }
+      .navlinks a{ padding: 8px 10px; border-radius: 10px; }
+      .section-head{ padding: 20px 18px 12px; }
+      .section-body{ padding: 0 18px 20px; }
+      .section-sub{ text-align:left; }
+    }
+    @media (max-width: 520px){
+      .navlinks{ flex-direction: column; align-items:flex-end; gap:6px; }
+      .logo{ font-size:1.15rem; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="logo">
+      <span class="logo-dot"></span>
+      <span>Stutter-Helper</span>
+    </div>
+
+    <ul class="navlinks">
+      <li><a href="{{ url_for('home') }}">Home</a></li>
+
+      {% if username %}
+        <li><a href="{{ url_for('profile') }}">Profile</a></li>
+        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+      {% else %}
+        <li><a href="{{ url_for('login') }}">Login</a></li>
+        <li><a href="{{ url_for('register') }}">Register</a></li>
+      {% endif %}
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="page">
+    <!-- HERO -->
+    <section class="card">
+      <div class="card-inner">
+
+        <div class="badge">
+          <span></span>
+          <div>Welcome back</div>
+        </div>
+
+        <h1>
+          Welcome{% if username %}, {{ username }}{% endif %}!
+        </h1>
+
+        {% if username %}
+          <p class="sub">You are logged in and ready to explore our features.</p>
+
+          <!-- ✅ UPDATED: Added Feedback + Results buttons -->
+          <div class="actions">
+            <a class="btn btn-primary" href="{{ url_for('dashboard_redirect') }}">
+              Go to Dashboard
+            </a>
+            <a class="btn btn-ghost" href="{{ url_for('profile') }}">
+              View Profile
+            </a>
+            <a class="btn btn-ghost" href="{{ url_for('feedback') }}">
+              Feedback
+            </a>
+             {% if role == 'patient' %}
+    <a class="btn btn-ghost" href="{{ url_for('results') }}">
+      Results
+    </a>
+  {% endif %}
+          </div>
+        {% else %}
+          <p class="sub">Please login or register to access the full experience of our application.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="{{ url_for('login') }}">
+              Login
+            </a>
+            <a class="btn btn-ghost" href="{{ url_for('register') }}">
+              Create Account
+            </a>
+          </div>
+        {% endif %}
+
+      </div>
+    </section>
+
+    <!-- ✅ Patient-only: Speech Therapy -->
+    {% if username and role == "patient" %}
+      <section class="card" id="speechTherapyCard">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">My Speech Exercises</h2>
+            <div class="small-muted">Assigned by your therapist</div>
+          </div>
+          <div class="section-sub">
+            Stay consistent • Record & upload your response
+          </div>
+        </div>
+
+        <div class="section-body">
+          <div id="assignmentsBox" class="small-muted">Loading exercises...</div>
+        </div>
+      </section>
+
+      <script>
+        // ------------- helpers -------------
+        function esc(str){
+          return String(str || "")
+            .replaceAll("&","&amp;")
+            .replaceAll("<","&lt;")
+            .replaceAll(">","&gt;")
+            .replaceAll('"',"&quot;")
+            .replaceAll("'","&#039;");
+        }
+
+        function statusPill(status){
+          const s = (status || "assigned").toLowerCase();
+          if(s === "submitted") return `<span class="pill">Submitted</span>`;
+          if(s === "reviewed")  return `<span class="pill">Reviewed</span>`;
+          return `<span class="pill">Assigned</span>`;
+        }
+
+        // per-assignment recorder state
+        const recState = {}; // { [assignmentId]: { recorder, chunks, blob, url, stream } }
+
+        function qs(id){ return document.getElementById(id); }
+
+        function setMsg(assignmentId, type, text){
+          const el = qs(`msg_${assignmentId}`);
+          if(!el) return;
+          el.className = "msg";
+          if(type === "ok") el.classList.add("ok");
+          if(type === "err") el.classList.add("err");
+          el.textContent = text || "";
+        }
+
+        function setLive(assignmentId, live){
+          const el = qs(`st_${assignmentId}`);
+          if(!el) return;
+          el.classList.toggle("live", !!live);
+          el.textContent = live ? "Recording..." : "Ready";
+        }
+
+        function enableButtons(assignmentId, opts){
+          // opts: { canStart, canStop, canUpload }
+          const bStart = qs(`start_${assignmentId}`);
+          const bStop  = qs(`stop_${assignmentId}`);
+          const bUp    = qs(`upload_${assignmentId}`);
+
+          if(bStart) bStart.disabled = !opts.canStart;
+          if(bStop)  bStop.disabled  = !opts.canStop;
+          if(bUp)    bUp.disabled    = !opts.canUpload;
+        }
+
+        async function startRecording(assignmentId){
+          setMsg(assignmentId, "", "");
+          try{
+            if(!navigator.mediaDevices || !window.MediaRecorder){
+              setMsg(assignmentId, "err", "Recording not supported in this browser.");
+              return;
+            }
+
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            const chunks = [];
+            const rec = new MediaRecorder(stream);
+
+            rec.ondataavailable = (e) => {
+              if(e.data && e.data.size > 0) chunks.push(e.data);
+            };
+
+            rec.onstop = () => {
+              const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
+              const url = URL.createObjectURL(blob);
+
+              // store state
+              recState[assignmentId].blob = blob;
+              recState[assignmentId].url = url;
+
+              // attach audio preview
+              const audio = qs(`audio_${assignmentId}`);
+              if(audio){
+                audio.src = url;
+                audio.style.display = "block";
+              }
+
+              setLive(assignmentId, false);
+              enableButtons(assignmentId, { canStart:true, canStop:false, canUpload:true });
+            };
+
+            recState[assignmentId] = { recorder: rec, chunks, blob:null, url:null, stream };
+
+            rec.start();
+            setLive(assignmentId, true);
+            enableButtons(assignmentId, { canStart:false, canStop:true, canUpload:false });
+
+          }catch(err){
+            console.error(err);
+            setLive(assignmentId, false);
+            enableButtons(assignmentId, { canStart:true, canStop:false, canUpload:false });
+            setMsg(assignmentId, "err", "Mic permission denied or unavailable.");
+          }
+        }
+
+        function stopRecording(assignmentId){
+          setMsg(assignmentId, "", "");
+          const st = recState[assignmentId];
+          if(!st || !st.recorder) return;
+
+          try{
+            if(st.recorder.state !== "inactive"){
+              st.recorder.stop();
+            }
+          }catch(e){}
+
+          // stop mic track
+          try{
+            if(st.stream){
+              st.stream.getTracks().forEach(t => t.stop());
+            }
+          }catch(e){}
+        }
+
+        async function uploadRecording(assignmentId){
+          setMsg(assignmentId, "", "");
+          const st = recState[assignmentId];
+          if(!st || !st.blob){
+            setMsg(assignmentId, "err", "Please record first, then upload.");
+            return;
+          }
+
+          enableButtons(assignmentId, { canStart:false, canStop:false, canUpload:false });
+          setMsg(assignmentId, "", "");
+          try{
+            const fd = new FormData();
+
+            // choose filename based on mime
+            const ext = (st.blob.type || "").includes("wav") ? "wav" :
+                        (st.blob.type || "").includes("mpeg") ? "mp3" :
+                        "webm";
+
+            const file = new File([st.blob], `speech_${assignmentId}.${ext}`, { type: st.blob.type || "audio/webm" });
+            fd.append("file", file);
+
+            const res = await fetch(`/api/speech/submit/${assignmentId}`, {
+              method: "POST",
+              body: fd
+            });
+
+            const data = await res.json().catch(()=> ({}));
+
+            if(!res.ok || !data || !data.success){
+              const msg = (data && data.error) ? data.error : "Upload failed.";
+              setMsg(assignmentId, "err", msg);
+              enableButtons(assignmentId, { canStart:true, canStop:false, canUpload:true });
+              return;
+            }
+
+            setMsg(assignmentId, "ok", "Uploaded successfully!");
+            enableButtons(assignmentId, { canStart:true, canStop:false, canUpload:true });
+
+            // Refresh assignments (so status becomes submitted)
+            loadMySpeechAssignments();
+
+          }catch(err){
+            console.error(err);
+            setMsg(assignmentId, "err", "Upload failed (network/server).");
+            enableButtons(assignmentId, { canStart:true, canStop:false, canUpload:true });
+          }
+        }
+
+        // ------------- load assignments -------------
+        async function loadMySpeechAssignments(){
+          const box = document.getElementById("assignmentsBox");
+          if(!box) return;
+
+          try{
+            const res = await fetch("/api/patient/speech_assignments", { cache:"no-store" });
+            const data = await res.json();
+
+            if(!res.ok || !data || !data.success){
+              box.textContent = "Failed to load exercises.";
+              return;
+            }
+
+            const items = data.assignments || [];
+            if(!items.length){
+              box.textContent = "No exercises assigned yet.";
+              return;
+            }
+
+            box.innerHTML = `
+              <div class="assignments">
+                ${items.map(a => `
+                  <div class="item">
+                    <div class="item-top">
+                      <div>
+                        <p class="item-title">${esc(a.title)}</p>
+                        ${a.due_date ? `<div class="small-muted" style="margin-top:4px">Due: <strong>${esc(a.due_date)}</strong></div>` : ""}
+                      </div>
+                      ${statusPill(a.status)}
+                    </div>
+
+                    ${a.instructions ? `<div class="meta" style="margin-top:10px">${esc(a.instructions)}</div>` : ""}
+
+                    <div class="small-muted" style="margin-top:10px">
+                      Assigned at: ${esc(a.assigned_at || "")}
+                    </div>
+
+                    <!-- ✅ Recorder + Upload -->
+                    <div class="rec-wrap">
+                      <div class="rec-row">
+                        <button class="mini-btn mini-primary" id="start_${a.id}" type="button">Start Recording</button>
+                        <button class="mini-btn mini-danger" id="stop_${a.id}" type="button" disabled>Stop</button>
+                        <button class="mini-btn mini-ok" id="upload_${a.id}" type="button" disabled>Upload</button>
+                        <span class="rec-status" id="st_${a.id}">Ready</span>
+                      </div>
+
+                      <audio id="audio_${a.id}" controls style="display:none"></audio>
+                      <div id="msg_${a.id}" class="msg"></div>
+                    </div>
+                  </div>
+                `).join("")}
+              </div>
+            `;
+
+            // attach button handlers
+            items.forEach(a => {
+              const bStart = qs(`start_${a.id}`);
+              const bStop  = qs(`stop_${a.id}`);
+              const bUp    = qs(`upload_${a.id}`);
+
+              if(bStart) bStart.onclick = () => startRecording(a.id);
+              if(bStop)  bStop.onclick  = () => stopRecording(a.id);
+              if(bUp)    bUp.onclick    = () => uploadRecording(a.id);
+
+              // If already submitted/reviewed, allow record again but still show status
+              enableButtons(a.id, { canStart:true, canStop:false, canUpload:false });
+              setLive(a.id, false);
+            });
+
+          }catch(e){
+            console.error(e);
+            box.textContent = "Error loading exercises.";
+          }
+        }
+
+        document.addEventListener("DOMContentLoaded", loadMySpeechAssignments);
+      </script>
+    {% endif %}
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2025 StutterHelper. All rights reserved.</p>
+  </footer>
+</body>
+</html>

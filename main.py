@@ -143,10 +143,10 @@ app.register_blueprint(google_bp, url_prefix="/login")
 # app.register_blueprint(google_bp, url_prefix="/login")
 app.secret_key = os.environ['SECRET_KEY']
 # MySQL Configuration
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'ABDraf12@'
-app.config['MYSQL_DB'] = 'login'
+app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST', 'localhost')
+app.config['MYSQL_USER'] = os.getenv('MYSQL_USER', 'root')
+app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD', '')
+app.config['MYSQL_DB'] = os.getenv('MYSQL_DB', 'login')
 app.config['ARCHIVE_FOLDER'] = 'archives'
 app.config['UPLOAD_DIR'] = 'audio_uploads'
 
